@@ -1,6 +1,3 @@
-import jdk.jfr.Label;
-
-import java.awt.font.TextHitInfo;
 import java.util.*;
 
 public class Main {
@@ -11,6 +8,19 @@ public class Main {
 
     }
 }
+class Weapon {
+    int itemBaseDamage;
+    float itemCritChance;
+    double itemCritDamageMulti;
+    float itemRarity;
+    boolean consumable = false;
+    private Weapon(int itemBaseDamage, float itemCritChance, double itemCritDamageMulti, float itemRarity){
+        this.itemBaseDamage = itemBaseDamage;
+        this.itemCritChance = itemCritChance;
+        this.itemCritDamageMulti = itemCritDamageMulti;
+        this.itemRarity = itemRarity;
+    }
+}
 class Player{
     int maxHealth;
     int baseDamage;
@@ -18,7 +28,7 @@ class Player{
     int currentHealth;
     int entitiesDefeated;
     double playerLevel;
-    // TODO add equipped item and add sword class and maybe even an armour class and all related functions.
+    // TODO add equipped Weapon and add sword class and maybe even an armour class and all related functions.
     HashMap<String,Integer> inventory = new HashMap<String,Integer>();
 
 
@@ -90,7 +100,9 @@ class Player{
     private void damagePlayer(int damageTaken){
         // use this function to deal damage to the player as it will also check if the player is dead after while set health will not
         this.currentHealth -= damageTaken;
-        // TODO call is player dead function.
+        if(isPlayerDead()){
+            //TODO call game over function or otherwise deal with player death.
+        }
     }
     private void healPlayer(int healthGain){
         int maxHealth = getMaxHealth();
@@ -121,21 +133,33 @@ class Player{
         int newItemQuantity = (currentItemQuantity - 1);
         if(newItemQuantity > 1){
             inventory.put(item,newItemQuantity);
-            //player consumes an item.
+            //player consumes an Weapon.
         }
         else if(newItemQuantity == 0){
             inventory.remove(item);
-            //player uses the last of an item.
+            //player uses the last of an Weapon.
 
         }
         else{
-            System.out.println("Uh oh it looks like you tried to remove an item not in the players inventory something ain't right");
-            // this would most likely be caused if a consume item was called without first checking has item.
+            System.out.println("Uh oh it looks like you tried to remove an Weapon not in the players inventory something ain't right");
+            // this would most likely be caused if a consume Weapon was called without first checking has Weapon.
         }
 
     }
-
     // TODO add equip function for equipping equipment
+    // endregion
+    //region player checks
+    private boolean isPlayerDead(){
+        if (currentHealth <= 0){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    private boolean playerHasItem(String item){
+        return inventory.containsKey(item)? true:false;
+    }
 
 
 
