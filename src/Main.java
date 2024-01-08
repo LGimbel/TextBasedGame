@@ -8,28 +8,79 @@ public class Main {
 
     }
 }
-class Weapon {
-    int itemBaseDamage;
-    float itemCritChance;
-    double itemCritDamageMulti;
-    float itemRarity;
-    boolean consumable = false;
-    private Weapon(int itemBaseDamage, float itemCritChance, double itemCritDamageMulti, float itemRarity){
-        this.itemBaseDamage = itemBaseDamage;
-        this.itemCritChance = itemCritChance;
-        this.itemCritDamageMulti = itemCritDamageMulti;
-        this.itemRarity = itemRarity;
+enum PotionLevel {
+    MINI,LESSER,NORMAL,GREATER,GRAND,OMEGA
+}
+class Item{
+    private String itemName;
+    public Item(String itemName){
+        this.itemName = itemName;
+    }
+    public String getItemName(){
+        return itemName;
+    }
+
+}
+class Armour extends Item{
+    private int defense;
+    private float dodgeChance;
+    public Armour(String itemName,int defense,float dodgeChance){
+        super(itemName);
+        this.defense = defense;
+        this.dodgeChance = dodgeChance;
     }
 }
+class HealthPotion extends Item{
+    private PotionLevel healingLevel;
+
+    // levels small,lesser,normal,greater,grand,Omega.
+
+    public HealthPotion(String itemName, PotionLevel level){
+        super(itemName);
+        this.healingLevel = level;
+    }
+
+}
+
+class Weapon extends Item {
+
+   private int weaponBaseDamage;
+   private float weaponCriticalHitChance;
+   private double weaponCriticalDamageMulti;
+   private float weaponRarity;
+   private boolean isConsumable;
+    public Weapon(String itemName, int itemBaseDamage, float itemCritChance, double itemCritDamageMulti, float itemRarity){
+        super(itemName);
+        this.weaponBaseDamage = itemBaseDamage;
+        this.weaponCriticalHitChance = itemCritChance;
+        this.weaponCriticalDamageMulti = itemCritDamageMulti;
+        this.weaponRarity = itemRarity;
+        this.isConsumable = false;
+    }
+    //region getter functions
+    public int getWeaponBaseDamage(){
+        return this.weaponBaseDamage;
+    }
+    public float getWeaponCriticalHitChance(){
+        return this.weaponCriticalHitChance;
+    }
+    public double getWeaponCriticalDamageMulti(){
+        return this.weaponCriticalDamageMulti;
+    }
+    public float getItemRarity(){
+        return this.weaponRarity;
+    }
+}
+
 class Player{
-    int maxHealth;
-    int baseDamage;
-    double currentDamageMulti;
-    int currentHealth;
-    int entitiesDefeated;
-    double playerLevel;
+   private int maxHealth;
+   private int baseDamage;
+   private double currentDamageMulti;
+   private int currentHealth;
+   private int entitiesDefeated;
+   private double playerLevel;
     // TODO add equipped Weapon and add sword class and maybe even an armour class and all related functions.
-    HashMap<String,Integer> inventory = new HashMap<String,Integer>();
+   private HashMap<String,Integer> inventory = new HashMap<String,Integer>();
 
 
 
@@ -45,66 +96,66 @@ class Player{
 
     }
     //region getter functions
-    private int getMaxHealth(){
+    public int getMaxHealth(){
         return maxHealth;
     }
-    private int getBaseDamage() {
+    public int getBaseDamage() {
         return baseDamage;
     }
-    private double getCurrentDamageMulti(){
+    public double getCurrentDamageMulti(){
         return currentDamageMulti;
     }
-    private int getCurrentHealth(){
+    public int getCurrentHealth(){
         return currentHealth;
     }
-    private int getEntitiesDefeated(){
+    public int getEntitiesDefeated(){
         return entitiesDefeated;
     }
-    private double getPlayerLevel(){
+    public double getPlayerLevel(){
         return playerLevel;
     }
-    private HashMap<String,Integer> getInventory(){
+    public HashMap<String,Integer> getInventory(){
         return inventory;
     }
     //endregion
     //region Setter functions
-    private void setMaxHealth(int newMaxHealth){
+    public void setMaxHealth(int newMaxHealth){
         this.maxHealth = newMaxHealth;
     }
-    private void setBaseDamage(int newBaseDamage){
+    public void setBaseDamage(int newBaseDamage){
         this.baseDamage = newBaseDamage;
     }
-    private void setCurrentDamageMulti(double newDamageMulti){
+    public void setCurrentDamageMulti(double newDamageMulti){
         this.currentDamageMulti = newDamageMulti;
     }
-    private void setCurrentHealth(int newHealth) {
+    public void setCurrentHealth(int newHealth) {
         this.currentHealth = newHealth;
         // this function is to be used only for directly setting
         // health such as level ups and other occasions normal healing and damage will be done through the heal and damage functions.
     }
-    private void setEntitiesDefeated(int newEntitiesDefeated){
+    public void setEntitiesDefeated(int newEntitiesDefeated){
         this.entitiesDefeated = newEntitiesDefeated;
         // not to be used for increment after battle success instead for setting directly if needed mostly likely to be depreciated.
     }
-    private void setPlayerLevel(int newPlayerLevel){
+    public void setPlayerLevel(int newPlayerLevel){
         // not to be used for directly incrementing the player level after successful battle but instead for direct change of the players
         // level.
         this.playerLevel = newPlayerLevel;
     }
-    private void setInventory(HashMap<String,Integer> newInventory){
+    public void setInventory(HashMap<String,Integer> newInventory){
         //NOTE FOR TESTING PURPOSES ONLY IN GAME INTERACTIONS WILL USE THE ADD/REMOVE FROM INVENTORY FUNCTIONS.
         this.inventory = newInventory;
     }
     //endregion
     //region player stat incremental change functions.
-    private void damagePlayer(int damageTaken){
+    public void damagePlayer(int damageTaken){
         // use this function to deal damage to the player as it will also check if the player is dead after while set health will not
         this.currentHealth -= damageTaken;
         if(isPlayerDead()){
             //TODO call game over function or otherwise deal with player death.
         }
     }
-    private void healPlayer(int healthGain){
+    public void healPlayer(int healthGain){
         int maxHealth = getMaxHealth();
         int mathCurrentHealth = getCurrentHealth();
         if ((mathCurrentHealth + healthGain) >= maxHealth){
@@ -114,10 +165,10 @@ class Player{
             this.currentHealth += healthGain;
         }
     }
-    private void incrementEntitiesDefeated(){
+    public void incrementEntitiesDefeated(){
         this.entitiesDefeated++;
     }
-    private void addToInventory(String item,int quantity){
+    public void addToInventory(String item, int quantity){
         if (inventory.containsKey(item)){
            int currentAmount = inventory.get(item);
            int newAmount = currentAmount + quantity;
@@ -128,7 +179,7 @@ class Player{
         }
 
     }
-    private void consumeItem(String item){
+    public void consumeItem(String item){
         int currentItemQuantity = inventory.get(item);
         int newItemQuantity = (currentItemQuantity - 1);
         if(newItemQuantity > 1){
@@ -149,7 +200,7 @@ class Player{
     // TODO add equip function for equipping equipment
     // endregion
     //region player checks
-    private boolean isPlayerDead(){
+    public boolean isPlayerDead(){
         if (currentHealth <= 0){
             return true;
         }
@@ -157,7 +208,7 @@ class Player{
             return false;
         }
     }
-    private boolean playerHasItem(String item){
+    public boolean playerHasItem(String item){
         return inventory.containsKey(item)? true:false;
     }
 
