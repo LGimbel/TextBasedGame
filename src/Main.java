@@ -3,6 +3,10 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
+        Weapon fists = new Weapon("Fists",2,0,1,1);
+        Armour leather = new Armour("Leather Apron",0,0);
+        HashMap<Item,Integer> playerInv = new HashMap<>();
+        Player player = new Player(58, 58,0,1, fists,leather, playerInv);
         System.out.println("Hello world!");
 
 
@@ -24,20 +28,27 @@ class Item{
 class Armour extends Item{
     private int defense;
     private float dodgeChance;
+    private boolean isConsumable;
     public Armour(String itemName,int defense,float dodgeChance){
         super(itemName);
         this.defense = defense;
         this.dodgeChance = dodgeChance;
+        this.isConsumable = false;
     }
 }
 class HealthPotion extends Item{
     private PotionLevel healingLevel;
+    private boolean isConsumable;
 
     // levels small,lesser,normal,greater,grand,Omega.
 
     public HealthPotion(String itemName, PotionLevel level){
         super(itemName);
         this.healingLevel = level;
+        this.isConsumable = false;
+    }
+    public PotionLevel getHealingLevel(){
+        return healingLevel;
     }
 
 }
@@ -74,37 +85,33 @@ class Weapon extends Item {
 
 class Player{
    private int maxHealth;
-   private int baseDamage;
-   private double currentDamageMulti;
    private int currentHealth;
    private int entitiesDefeated;
    private double playerLevel;
-    // TODO add equipped Weapon and add sword class and maybe even an armour class and all related functions.
-   private HashMap<String,Integer> inventory = new HashMap<String,Integer>();
+   private Weapon equippedWeapon;
+   private Armour equippedArmour;
+   private HashMap<Item,Integer> inventory = new HashMap<>();
+   //TODO ensure that the player base damage is not used if the player has a weapon equipped
 
 
 
 
-    public Player (int maxHealth,int baseDamage,double currentDamageMulti,int currentHealth,int entitiesDefeated,double playerLevel,HashMap<String,Integer> inventory){
+    public Player (int maxHealth,int currentHealth,int entitiesDefeated,double playerLevel,Weapon equippedWeapon,Armour equippedArmour,HashMap<Item,Integer> inventory){
         this.maxHealth = maxHealth;
-        this.baseDamage = baseDamage;
-        this.currentDamageMulti = currentDamageMulti;
         this.currentHealth = currentHealth;
         this.entitiesDefeated = entitiesDefeated;
         this.playerLevel = playerLevel;
         this.inventory = inventory;
+        this.equippedWeapon = equippedWeapon;
+        this.equippedArmour = equippedArmour;
+
 
     }
     //region getter functions
     public int getMaxHealth(){
         return maxHealth;
     }
-    public int getBaseDamage() {
-        return baseDamage;
-    }
-    public double getCurrentDamageMulti(){
-        return currentDamageMulti;
-    }
+
     public int getCurrentHealth(){
         return currentHealth;
     }
@@ -114,19 +121,13 @@ class Player{
     public double getPlayerLevel(){
         return playerLevel;
     }
-    public HashMap<String,Integer> getInventory(){
+    public HashMap<Item,Integer> getInventory(){
         return inventory;
     }
     //endregion
     //region Setter functions
     public void setMaxHealth(int newMaxHealth){
         this.maxHealth = newMaxHealth;
-    }
-    public void setBaseDamage(int newBaseDamage){
-        this.baseDamage = newBaseDamage;
-    }
-    public void setCurrentDamageMulti(double newDamageMulti){
-        this.currentDamageMulti = newDamageMulti;
     }
     public void setCurrentHealth(int newHealth) {
         this.currentHealth = newHealth;
@@ -142,7 +143,7 @@ class Player{
         // level.
         this.playerLevel = newPlayerLevel;
     }
-    public void setInventory(HashMap<String,Integer> newInventory){
+    public void setInventory(HashMap<Item,Integer> newInventory){
         //NOTE FOR TESTING PURPOSES ONLY IN GAME INTERACTIONS WILL USE THE ADD/REMOVE FROM INVENTORY FUNCTIONS.
         this.inventory = newInventory;
     }
@@ -168,7 +169,7 @@ class Player{
     public void incrementEntitiesDefeated(){
         this.entitiesDefeated++;
     }
-    public void addToInventory(String item, int quantity){
+    public void addToInventory(Item item, int quantity){
         if (inventory.containsKey(item)){
            int currentAmount = inventory.get(item);
            int newAmount = currentAmount + quantity;
@@ -179,16 +180,16 @@ class Player{
         }
 
     }
-    public void consumeItem(String item){
+    public void consumeItem(Item item){
         int currentItemQuantity = inventory.get(item);
         int newItemQuantity = (currentItemQuantity - 1);
         if(newItemQuantity > 1){
             inventory.put(item,newItemQuantity);
-            //player consumes an Weapon.
+            //player consumes an item.
         }
         else if(newItemQuantity == 0){
             inventory.remove(item);
-            //player uses the last of an Weapon.
+            //player uses the last of an Item.
 
         }
         else{
@@ -197,7 +198,43 @@ class Player{
         }
 
     }
-    // TODO add equip function for equipping equipment
+    public void EquipWeapon(Weapon newWeapon){
+        if(inventory.containsKey(equippedWeapon)){
+            inventory.put(equippedWeapon,(inventory.get(equippedWeapon)+1));
+        }
+        else{
+            inventory.put(equippedWeapon,1);
+
+        }
+        equippedWeapon = newWeapon;
+
+    }
+    public void EquipArmour(Armour newArmour) {
+        if (inventory.containsKey(equippedArmour)) {
+            inventory.put(equippedArmour, (inventory.get(equippedArmour) + 1));
+        } else {
+            inventory.put(equippedArmour, 1);
+
+        }
+        equippedArmour = newArmour;
+    }
+    public void ConsumeHealthPotion(HealthPotion potion){
+        int currentItemQuantity = inventory.get(potion);
+        int newItemQuantity = (currentItemQuantity - 1);
+        if(newItemQuantity > 1){
+            inventory.put(potion,newItemQuantity);}
+        //TODO find final determinate values for health potion healing current values are just placeholders.
+            healPlayer(
+        switch (potion.getHealingLevel()){
+            case MINI -> 2;
+            case LESSER -> 5;
+            case NORMAL -> 7;
+            case GREATER -> 10;
+            case GRAND -> 15;
+            case OMEGA -> 30;
+        }
+        );
+    }
     // endregion
     //region player checks
     public boolean isPlayerDead(){
