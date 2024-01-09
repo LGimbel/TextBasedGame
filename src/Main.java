@@ -11,6 +11,7 @@ public class Main {
         System.out.println("Hello world!");
 
 
+
     }
 }
 //region enumerations
@@ -30,16 +31,16 @@ class WorldManager {
     }
     public void GenerateNewEntity(Player player){
          double playerLevel = player.getPlayerLevel();
+         int playerKillCount = player.getEntitiesDefeated();
          //region entity specs to be generated
-         int entityHealth;
-         int entityBaseDamage;
+         int entityHealth = GenerateEntityHealth(playerLevel);
+         int entityBaseDamage = GenerateEntityBaseDamage(playerLevel);
          // for now critical hit chance will be locked at 5 percent for all
          int entityCriticalHitChance = 5;
          // entity's will begin to get defense after 15 killed
         // it will compound slowly based on kills not on player level
-         int entityDefense;
-         //
-         boolean isBoss;
+         int entityDefense = GenerateEntityDefense(playerKillCount);
+         boolean isBoss = GenerateBossStatus(playerLevel,playerKillCount);
          boolean isEscapable;
          boolean isDead;
          double entityExperience;
@@ -67,11 +68,48 @@ class WorldManager {
            return 0;
        } else if (killCount < 20) {
            return random.nextInt(1,2);
-       } else if (killCount < ) {
+       } else if (killCount < 25) {
+           return random.nextInt(1,4);
 
+       } else if (killCount < 30) {
+           return random.nextInt(2,6);
+       } else if (killCount < 40) {
+           return random.nextInt(4,8);
        }
-
+       else {
+           return random.nextInt(0,17);
+       }
     }
+    public boolean GenerateBossStatus(double playerLevel,int killCount){
+        int bossHits[] = new int[20];
+        bossHits[0] = 42;
+        if ( killCount % 3 == 0);{
+            bossHits[1] = 100;
+            bossHits[2] = 99;
+            bossHits[3] = 98;
+            bossHits[4] = 97;
+        }
+        if(playerLevel >= 15){
+            bossHits[5] = 96;
+            bossHits[6] = 95;
+            bossHits[7] = 94;
+            bossHits[8] = 93;
+            bossHits[9] = 92;
+        }
+        int bossMaker = random.nextInt(0,101);
+        for(int i: bossHits){
+            if (i == bossMaker){
+                return true;
+            }
+        }
+        if(killCount % 10 == 0){
+            return random.nextBoolean();
+        }
+        return false;
+    }
+
+
+    //endregion
 
 }
 

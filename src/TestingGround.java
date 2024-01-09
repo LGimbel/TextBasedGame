@@ -1,29 +1,60 @@
 import java.util.*;
 public class TestingGround {
+    Random random = new Random();
+    public int GenerateEntityDefense (int killCount){
+        int result;
+        if(killCount < 15){
+            result = 0;
+        } else if (killCount < 20) {
+            result = random.nextInt(1, 2);
+        } else if (killCount < 25) {
+            result = random.nextInt(1, 4);
 
+        } else if (killCount < 30) {
+            result = random.nextInt(2, 6);
+        } else if (killCount < 40) {
+            result = random.nextInt(4, 8);
+        }
+        else {
+            result = random.nextInt(0, 17);
+        }
+        return result;
+    }
 
 
     public static void main(String[] args) {
         Random random = new Random();
         long startime = System.currentTimeMillis();
 
-        for(double playerLevel = 1; playerLevel < 40; playerLevel += 0.5){
+        for(int killCount = 1; killCount < 70; killCount ++){
             int total = 0;
             int max = 0;
             int min = 100000;
             for (int i = 0;i !=100000;i++) {
-                int startDamage = 2 + (int)(playerLevel/2);
-                boolean modifier = random.nextBoolean();
-                int damageAdjust = (int) ((playerLevel*10)/(15));
-                int finalDamage = modifier ? startDamage + damageAdjust: (int) ((startDamage - damageAdjust) + playerLevel/1.3);
-                total+= finalDamage;
-                max = finalDamage > max ? finalDamage : max;
-                min = finalDamage < min ? finalDamage : min;
+                int result;
+                if(killCount < 15){
+                    result = 0;
+                } else if (killCount < 20) {
+                    result = random.nextInt(1, 2);
+                } else if (killCount < 25) {
+                    result = random.nextInt(1, 4);
+
+                } else if (killCount < 30) {
+                    result = random.nextInt(2, 6);
+                } else if (killCount < 40) {
+                    result = random.nextInt(4, 8);
+                }
+                else {
+                    result = random.nextInt(5, 17);
+                }
+                max = result > max ? result : max;
+                min = result < min ? result : min;
+                total += result;
 
             }
             int average = total/100000;
 //            System.out.println("Average: "+ average +" maximum: "+ max + " Minimum: " + min + " at level: " + playerLevel);
-            System.out.println(min);
+            System.out.println(max);
         }
         long endTime = System.currentTimeMillis();
         long elapsedTime = endTime - startime;

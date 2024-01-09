@@ -1,4 +1,4 @@
-level	Health(average over 1000) trials	Maximum	Minimum
+level	Health	Maximum	Minimum
 1	14	17	11
 1.5	16	21	12
 2	19	25	13
