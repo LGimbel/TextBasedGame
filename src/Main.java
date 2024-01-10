@@ -1,4 +1,6 @@
+import java.security.PublicKey;
 import java.util.*;
+
 
 public class Main {
 
@@ -7,8 +9,12 @@ public class Main {
         Weapon fists = new Weapon("Fists",2,0,1,ItemRarity.TRASH);
         Armour leather = new Armour("Leather Apron",0,0,ItemRarity.TRASH);
         HashMap<Item,Integer> playerInv = new HashMap<>();
-        Player player = new Player(58, 58,0,1, fists,leather, playerInv);
+        Player player = new Player(58, 58,2,1, fists,leather, playerInv);
         System.out.println("Hello world!");
+        WorldManager worldManager = new WorldManager();
+       Entity currentEntity = worldManager.GenerateNewEntity(player);
+       currentEntity.PrintAllStats();
+
 
 
 
@@ -24,12 +30,21 @@ enum PotionLevel {
 //endregion
 class WorldManager {
     //GOD to the world an instance should be made on game initialization.
+    //region creatureNaming
+    List<String> attributes = Arrays.asList("Oscillating","Romantic","Clumsy","Ferocious","Persnickety","Goopy","Pounding","Dramatic","Bumbling","Slithering");
+    List<String> Creatures = Arrays.asList("Phoenix","Shark","Bear","Penguin","Kitten","Alien","Unicorn","Eel","Raptor","Dragon");
+    //endregion
+
+
+
+
+
     private final Random random = new Random();
 
 
     WorldManager() {
     }
-    public void GenerateNewEntity(Player player){
+    public Entity GenerateNewEntity(Player player){
          double playerLevel = player.getPlayerLevel();
          int playerKillCount = player.getEntitiesDefeated();
          //region entity specs to be generated
@@ -41,13 +56,17 @@ class WorldManager {
         // it will compound slowly based on kills not on player level
          int entityDefense = GenerateEntityDefense(playerKillCount);
          boolean isBoss = GenerateBossStatus(playerLevel,playerKillCount);
-         boolean isEscapable;
-         boolean isDead;
-         double entityExperience;
-         double entityCriticalMultiplier;
-         String entityName;
+         boolean isEscapable = !isBoss;
+         boolean isDead = false;
+         double entityExperience = CalculateExperienceDrop(entityHealth,playerLevel);
+         double entityCriticalMultiplier = 2.0;
+         String entityName = GenerateCreatureName() ;
+         String trueName = isBoss ? "Boss ".concat(entityName): entityName;
+         Entity entity = new Entity(isBoss,isEscapable,trueName,entityExperience,entityHealth,entityBaseDamage,entityCriticalHitChance,entityCriticalMultiplier,entityDefense,isDead);
+         return entity;
          //TODO add loot drop to entity and make it predetermined here for each entity
          //endregion
+
     }
     //region entity generation algorithms
     public int GenerateEntityHealth(double playerLevel){
@@ -106,6 +125,16 @@ class WorldManager {
             return random.nextBoolean();
         }
         return false;
+    }
+    public String GenerateCreatureName(){
+        String attribute = attributes.get(random.nextInt(0,attributes.size()));
+        String creature = Creatures.get(random.nextInt(0,Creatures.size()));
+        String totalName = attribute.concat(" ").concat(creature);
+        return totalName;
+    }
+    public double CalculateExperienceDrop(int health,double playerLevel){
+        double experienceDrop = health/(60 + playerLevel*3);
+        return experienceDrop;
     }
 
 
@@ -189,6 +218,17 @@ class Entity {
     }
     public void DeathCheck(){
         if(entityHealth <= 0) this.isDead = true;
+    }
+
+
+    //endregion
+    //region utilities
+    public void PrintAllStats(){
+        System.out.println("Health: " + entityHealth + "\n");
+        System.out.println("Base Damage is: " + entityBaseDamage + "\n");
+        System.out.println("defense is: " + entityDefense + "\n");
+        System.out.println("experience is: " + entityExperience + "\n");
+        System.out.println("Name is :" + entityName + "\n");
     }
 
 

@@ -68,3 +68,36 @@ public class TestingGround {
 ////refine as health will normally be higher that desired
 //int refinedHealth1 = (int) (randomMod1 - ((random.nextInt((int)(0.5*playerLevel),(int)(4*playerLevel)))% (playerLevel/random.nextInt(1,6))));
 //            System.out.println(refinedHealth1+"With player level at "+ playerLevel);
+
+
+
+
+
+
+
+
+/*
+how i get the health
+ x = random number that is between 2y and 8y
+ z = (x - random number between 0.5y 8y)
+
+
+
+
+
+
+
+
+ */
+
+
+
+
+
+
+
+
+
+
+
+
