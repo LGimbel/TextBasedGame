@@ -1,4 +1,3 @@
-import java.security.PublicKey;
 import java.util.*;
 
 
@@ -9,14 +8,14 @@ public class Main {
         Weapon fists = new Weapon("Fists",2,0,1,ItemRarity.TRASH);
         Armour leather = new Armour("Leather Apron",0,0,ItemRarity.TRASH);
         HashMap<Item,Integer> playerInv = new HashMap<>();
-        Player player = new Player(58, 58,1,2, fists,leather, playerInv);
+        Player player = new Player(58, 58,1,100, fists,leather, playerInv);
         System.out.println("Hello world!");
         WorldManager worldManager = new WorldManager();
         LootManager lootManager = new LootManager();
        Entity currentEntity = worldManager.GenerateNewEntity(player);
        currentEntity.PrintAllStats();
        Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
-       weapon.printWeaponStats();
+       weapon.PintWeaponStats();
 
 
 
@@ -45,7 +44,7 @@ class LootManager{
     LootManager(){
         //constructor
     }
-    //TODO added dynamic armour generation and figure out entity drop stuff.
+
     public Weapon GenerateWeapon(Player player,Entity entity){
         //region player stats retrieved
        final double playerLevel = player.getPlayerLevel();
@@ -66,6 +65,18 @@ class LootManager{
         Weapon newWeapon = new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
         return newWeapon;
         //endregion
+    }
+    //TODO added dynamic armour generation and figure out entity drop stuff for all items and dealing with non weapon non armour items such as healing and gold.
+    public void GenerateArmour(Player player,Entity entity){
+        double playerLevel = player.getPlayerLevel();
+        boolean wasBoss = entity.isBoss();
+        //region armour stats to be generated
+        ItemRarity rarity = GenerateItemRarity(wasBoss);
+        String itemName;
+        int defense;
+        int dodgeChance;
+        //endregion
+
     }
     public ItemRarity GenerateItemRarity(boolean wasBoss){
         int lootRoll = random.nextInt(1,101); // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
@@ -162,9 +173,28 @@ class LootManager{
         return critMultiplier;
     }
     //endregion
+    //region armour specific generations
+    public int GenerateDefense(double playerLevel,ItemRarity rarity){
+        int baseDefenseLevel = (int) playerLevel;
+        int randomModifier = random.nextInt(0,baseDefenseLevel);
+        int preAugmentDefense = baseDefenseLevel + randomModifier;
+        int augmentedDefense = (int)switch (rarity){
+            case TRASH -> preAugmentDefense * 0.5;
+            case COMMON -> preAugmentDefense;
+            case UNCOMMON -> preAugmentDefense * 1.5;
+            case RARE -> preAugmentDefense * 2;
+            case LEGENDARY -> preAugmentDefense * 2.5;
+            case UNIQUE -> preAugmentDefense * 3.5;
+        };
+        return augmentedDefense;
+    }
+    //TODO finish armour generation.
+    public void GenerateDodgeChance(ItemRarity rarity){
+        int baseRandom = random.nextInt(0,11);
+
+    }
 
 }
-//endregion
 class WorldManager {
     //GOD to the world an instance should be made on game initialization.
     //region creatureNaming
@@ -273,8 +303,6 @@ class WorldManager {
 
     //endregion
 }
-
-
 class Entity {
     private int entityHealth;
     private final int entityBaseDamage;
@@ -441,7 +469,7 @@ class Weapon extends Item {
     public double getWeaponCriticalDamageMulti(){
         return this.weaponCriticalDamageMulti;
     }
-    public void printWeaponStats(){
+    public void PintWeaponStats(){
         System.out.println(getItemName() +"\nRarity: " + getRarity() + "\nBase Damage: " + weaponBaseDamage + "\nCritical Hit Chance: " + weaponCriticalHitChance + "\nCritical Hit Damage Multiplier: " + weaponCriticalDamageMulti);
     }
 
