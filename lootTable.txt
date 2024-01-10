@@ -1,0 +1,48 @@
+Chance for dropping different level gear
+if enemy killed was a boss {
+trash 0 %
+common 10 %
+uncommon 30%
+rare 30 %
+legendary 20%
+unique 10%
+
+
+
+}
+if the enemy was a common enemy {
+trash 19 %
+common 50 %
+uncommon 15%
+rare 10
+legendary 5 %
+unique 1%
+}
+
+affects of rarity level on weapon damage{
+all damage is in the form of an integer so doubles are cast back to integers after the calculation is complete.
+trash = * 0.7
+common = * 1
+uncommon = * 1.5
+rare = * 1.9
+legendary = * 2.3
+Unique = * 3
+}
+affects of rarity on critical hit chance{
+currently critical hit chance will be set by the rarity of the weapon however that is likely to change in the future.
+trash =  1%
+common =  5%
+uncommon = 10%
+rare =  15 %
+legendary =  20%
+Unique = 25%
+}
+affects of rarity on critical hit damage{
+currently the critical hit damage multiplier will be set in a direct relationship with rarity however that is due to change in the future;
+trash = * 1
+common = * 1.5
+uncommon = * 1.7
+rare = * 1.9
+legendary = * 2.2;
+Unique = 2.5
+}

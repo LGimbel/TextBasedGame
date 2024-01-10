@@ -5,15 +5,19 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) {
-        //TODO add game initilizer thingymcdo
+        //TODO add game initializer thingymcdo
         Weapon fists = new Weapon("Fists",2,0,1,ItemRarity.TRASH);
         Armour leather = new Armour("Leather Apron",0,0,ItemRarity.TRASH);
         HashMap<Item,Integer> playerInv = new HashMap<>();
-        Player player = new Player(58, 58,2,1, fists,leather, playerInv);
+        Player player = new Player(58, 58,1,2, fists,leather, playerInv);
         System.out.println("Hello world!");
         WorldManager worldManager = new WorldManager();
+        LootManager lootManager = new LootManager();
        Entity currentEntity = worldManager.GenerateNewEntity(player);
        currentEntity.PrintAllStats();
+       Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
+       weapon.printWeaponStats();
+
 
 
 
@@ -21,27 +25,153 @@ public class Main {
     }
 }
 //region enumerations
+
 enum ItemRarity{
     TRASH,COMMON,UNCOMMON,RARE,LEGENDARY,UNIQUE
 }
 enum PotionLevel {
     MINI,LESSER,NORMAL,GREATER,GRAND,OMEGA
 }
+class LootManager{
+    private Random random = new Random();
+    //region lists of loot modifier names
+    private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian"
+            ,"Ionized","Flaming","Destructive","Unstoppable");
+    private final List<String> NegativeWeaponNameModifiers = Arrays.asList("Rusty","Damaged","Broken","Weak","Warped","Fractured","Dull","Feeble","Cracked","Dilapidated");
+    private final List<String> WeaponNames = Arrays.asList("Claymore","Broad Sword","Reaper","Shadow's Bane","Ember Blade","Icy Talon","Glaive","Polearm","Night Fang","Trident","Dagger","Dirk","Ice-Pick","Gladius","Pike","War Hammer","Spear","Cleaver","Flail","Mace");
+
+    //endregion
+    // will contain functions to dynamically allocate loot drops for killed Entities.
+    LootManager(){
+        //constructor
+    }
+    //TODO added dynamic armour generation and figure out entity drop stuff.
+    public Weapon GenerateWeapon(Player player,Entity entity){
+        //region player stats retrieved
+       final double playerLevel = player.getPlayerLevel();
+       final int playerKills = player.getEntitiesDefeated();
+        //endregion
+        // region entity stats retrieved.
+        final double entityExperience = entity.getEntityExperience();
+        final int entityStartHealth = entity.getEntityMaxHealth();
+        final boolean wasBoss = entity.isBoss();
+        //endregion
+        //region weapon stats !to be dynamically generated
+        //further documentation for the stats generated here can be found in the lootTable.txt file
+        ItemRarity rarity = GenerateItemRarity(wasBoss);
+        String weaponName = GenerateWeaponName(rarity);
+        int baseDamage = GenerateWeaponBaseDamage(rarity,playerLevel);
+        int criticalHitChance = GenerateWeaponCriticalChance(rarity);
+        double criticalHitDamageMultiplier = GenerateWeaponCriticalDamageMultiplier(rarity);
+        Weapon newWeapon = new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
+        return newWeapon;
+        //endregion
+    }
+    public ItemRarity GenerateItemRarity(boolean wasBoss){
+        int lootRoll = random.nextInt(1,101); // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
+        ItemRarity rarity = ItemRarity.COMMON;
+        if (wasBoss){
+            //use this for rolling boss loot will have a higher chance of better gear for rarity chances see lootTable.txt
+            if(lootRoll <= 10){
+                // 10%  common drop chance from boss
+                rarity = ItemRarity.COMMON;
+            } else if (lootRoll <= 40) {
+                // 30% uncommon chance from bosses
+                rarity = ItemRarity.UNCOMMON;
+            } else if (lootRoll <= 70){
+                // 30% rare drop from bosses
+                rarity = ItemRarity.RARE;
+            }else if (lootRoll <= 90){
+                // 20% legendary drop from bosses
+                rarity = ItemRarity.LEGENDARY;
+            } else if (lootRoll <=100) {
+                //10% percent 
+                rarity = ItemRarity.UNIQUE;
+            }
+        }
+        else {
+            //use this for rolling normal loot will have a lower chance of rolling high level gear for rarity chances see lootTable.txt
+            if(lootRoll <= 19){
+                rarity = ItemRarity.TRASH;
+            } else if (lootRoll <= 69) {
+                rarity =ItemRarity.COMMON;
+            } else if (lootRoll <= 84) {
+                rarity = ItemRarity.UNCOMMON;
+            } else if (lootRoll <= 94){
+                rarity = ItemRarity.RARE;
+            }else if (lootRoll <= 99){
+                rarity = ItemRarity.LEGENDARY;
+            } else if (lootRoll == 100) {
+                rarity = ItemRarity.UNIQUE;
+            }
+        }
+        return rarity;
+    }
+    //region weapon specific generations
+    public String GenerateWeaponName(ItemRarity rarity){
+        String modifier;
+        String weapon;
+        String finalName;
+        if(rarity == ItemRarity.TRASH){
+            modifier = NegativeWeaponNameModifiers.get(random.nextInt(0,NegativeWeaponNameModifiers.size()));
+        }
+        else {
+            modifier = PositiveWeaponNameModifiers.get(random.nextInt(0,PositiveWeaponNameModifiers.size()));
+        }
+        weapon = WeaponNames.get(random.nextInt(0,WeaponNames.size()));
+        finalName = modifier.concat(" ").concat(weapon);
+        return finalName;
+
+    }
+    public int GenerateWeaponBaseDamage(ItemRarity rarity,double playerLevel){
+        int startDamage = 2 + (int)(playerLevel/2);
+        boolean modifier = random.nextBoolean();
+        int damageAdjust = (int) ((playerLevel*10)/(15));
+        int preAugmentDamage = modifier ? startDamage + damageAdjust: (int) ((startDamage - damageAdjust) + playerLevel/1.3);
+        double augmentedDamage = switch (rarity){
+            case TRASH -> preAugmentDamage * 0.7;
+            case COMMON -> preAugmentDamage;
+            case UNCOMMON -> preAugmentDamage * 1.5;
+            case RARE -> preAugmentDamage * 1.9;
+            case LEGENDARY -> preAugmentDamage * 2.3;
+            case UNIQUE -> preAugmentDamage * 3;
+        };
+        int finalDamage = (int) augmentedDamage;
+        return finalDamage;
+    }
+    public int GenerateWeaponCriticalChance(ItemRarity rarity){
+        int criticalHitChance = switch (rarity){
+            case TRASH -> 1;
+            case COMMON -> 5;
+            case UNCOMMON -> 10;
+            case RARE -> 15;
+            case LEGENDARY -> 20;
+            case UNIQUE -> 25;
+        };
+        return criticalHitChance;
+    }
+    public double GenerateWeaponCriticalDamageMultiplier(ItemRarity rarity){
+        double critMultiplier = switch (rarity){
+            case TRASH -> 1;
+            case COMMON -> 1.5;
+            case UNCOMMON -> 1.7;
+            case RARE -> 1.9;
+            case LEGENDARY -> 2.2;
+            case UNIQUE -> 2.5;
+        };
+        return critMultiplier;
+    }
+    //endregion
+
+}
 //endregion
 class WorldManager {
     //GOD to the world an instance should be made on game initialization.
     //region creatureNaming
-    List<String> attributes = Arrays.asList("Oscillating","Romantic","Clumsy","Ferocious","Persnickety","Goopy","Pounding","Dramatic","Bumbling","Slithering");
-    List<String> Creatures = Arrays.asList("Phoenix","Shark","Bear","Penguin","Kitten","Alien","Unicorn","Eel","Raptor","Dragon");
+   private final List<String> attributes = Arrays.asList("Oscillating","Romantic","Clumsy","Ferocious","Persnickety","Goopy","Pounding","Dramatic","Bumbling","Slithering");
+   private final List<String> Creatures = Arrays.asList("Phoenix","Shark","Bear","Penguin","Kitten","Alien","Unicorn","Eel","Raptor","Dragon");
     //endregion
-
-
-
-
-
     private final Random random = new Random();
-
-
     WorldManager() {
     }
     public Entity GenerateNewEntity(Player player){
@@ -121,8 +251,10 @@ class WorldManager {
                 return true;
             }
         }
-        if(killCount % 10 == 0){
-            return random.nextBoolean();
+        if(killCount % 10 == 0 && killCount != 0){
+            boolean bossCheck1 = random.nextBoolean();
+            boolean bossCheck2 = random.nextBoolean();
+            boolean bossSummon = bossCheck1 && bossCheck2;
         }
         return false;
     }
@@ -138,13 +270,15 @@ class WorldManager {
     }
 
 
-    //endregion
 
+    //endregion
 }
+
 
 class Entity {
     private int entityHealth;
     private final int entityBaseDamage;
+    private final int entityMaxHealth;
     private final int entityCriticalHitChance;
     private final double entityCriticalMultiplier;
     private final int entityDefense;
@@ -160,6 +294,7 @@ class Entity {
         this.entityName = entityName;
         this.entityExperience = entityExperience;
         this.entityHealth = entityHealth;
+        this.entityMaxHealth = entityHealth;
         this.entityBaseDamage = entityBaseDamage;
         this.entityCriticalHitChance = entityCriticalHitChance;
         this.entityCriticalMultiplier = entityCriticalMultiplier;
@@ -197,6 +332,9 @@ class Entity {
     public int getEntityDefense(){
         return entityDefense;
     }
+    public int getEntityMaxHealth(){
+        return entityMaxHealth;
+    }
 
     //endregion
 
@@ -224,11 +362,11 @@ class Entity {
     //endregion
     //region utilities
     public void PrintAllStats(){
-        System.out.println("Health: " + entityHealth + "\n");
-        System.out.println("Base Damage is: " + entityBaseDamage + "\n");
-        System.out.println("defense is: " + entityDefense + "\n");
-        System.out.println("experience is: " + entityExperience + "\n");
-        System.out.println("Name is :" + entityName + "\n");
+        System.out.println("Health: " + entityHealth);
+        System.out.println("Base Damage is: " + entityBaseDamage);
+        System.out.println("defense is: " + entityDefense);
+        System.out.println("experience is: " + entityExperience);
+        System.out.println("Name is: " + entityName);
     }
 
 
@@ -302,6 +440,9 @@ class Weapon extends Item {
     }
     public double getWeaponCriticalDamageMulti(){
         return this.weaponCriticalDamageMulti;
+    }
+    public void printWeaponStats(){
+        System.out.println(getItemName() +"\nRarity: " + getRarity() + "\nBase Damage: " + weaponBaseDamage + "\nCritical Hit Chance: " + weaponCriticalHitChance + "\nCritical Hit Damage Multiplier: " + weaponCriticalDamageMulti);
     }
 
     //endregion

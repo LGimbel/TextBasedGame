@@ -1,69 +1,55 @@
 import java.util.*;
 public class TestingGround {
-    Random random = new Random();
-    public int GenerateEntityDefense (int killCount){
-        int result;
-        if(killCount < 15){
-            result = 0;
-        } else if (killCount < 20) {
-            result = random.nextInt(1, 2);
-        } else if (killCount < 25) {
-            result = random.nextInt(1, 4);
 
-        } else if (killCount < 30) {
-            result = random.nextInt(2, 6);
-        } else if (killCount < 40) {
-            result = random.nextInt(4, 8);
-        }
-        else {
-            result = random.nextInt(0, 17);
-        }
-        return result;
-    }
+
 
 
     public static void main(String[] args) {
         Random random = new Random();
-        long startime = System.currentTimeMillis();
+        boolean wasBoss = false;
 
-        for(int killCount = 1; killCount < 70; killCount ++){
-            int total = 0;
+            int totalTrash = 0;
+            int totalCommon = 0;
+            int totalUncommon = 0;
+            int totalRare = 0;
+            int totalLegendary = 0;
+            int totalUnique = 0;
+            int totalOther = 0;
+            int totalIterations = 0;
             int max = 0;
             int min = 100000;
-            for (int i = 0;i !=100000;i++) {
-                int result;
-                if(killCount < 15){
-                    result = 0;
-                } else if (killCount < 20) {
-                    result = random.nextInt(1, 2);
-                } else if (killCount < 25) {
-                    result = random.nextInt(1, 4);
+            for( int i = 0; i < 1000000;i++){
+               ; // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
 
-                } else if (killCount < 30) {
-                    result = random.nextInt(2, 6);
-                } else if (killCount < 40) {
-                    result = random.nextInt(4, 8);
-                }
-                else {
-                    result = random.nextInt(5, 17);
-                }
-                max = result > max ? result : max;
-                min = result < min ? result : min;
-                total += result;
+    }
 
-            }
-            int average = total/100000;
+            double averageTrash = (double) totalTrash / totalIterations;
+            double averageCommon = (double) totalCommon / totalIterations;
+            double averageUncommon = (double) totalUncommon / totalIterations;
+            double averageRare = (double) totalRare / totalIterations;
+            double averageLegendary = (double) totalLegendary / totalIterations;
+            double averageUnique = (double) totalUnique / totalIterations;
+            double averageOthers = (double) totalOther / totalIterations;
+            System.out.println(totalIterations);
+            System.out.println(totalOther);
+
+
+
+
+
+
+
+
+//            int average = total/100000;
 //            System.out.println("Average: "+ average +" maximum: "+ max + " Minimum: " + min + " at level: " + playerLevel);
             System.out.println(max);
         }
-        long endTime = System.currentTimeMillis();
-        long elapsedTime = endTime - startime;
-        System.out.println(elapsedTime + " Milliseconds");
+
 
 
     }
 
-}
+
 //int randomMod1 = 10 + random.nextInt((int)(0.9*playerLevel),(int)(2*playerLevel));
 ////refine as health will normally be higher that desired
 //int refinedHealth1 = (int) (randomMod1 - ((random.nextInt((int)(0.5*playerLevel),(int)(4*playerLevel)))% (playerLevel/random.nextInt(1,6))));
