@@ -225,7 +225,7 @@ class UserInterFace{
         System.out.println("\tThe first is defense which works the same way as it does for enemies so all incoming damage will be reduced by your defense.");
         System.out.println("\tIf your defense is higher that the incoming damage you will take no damage.");
         System.out.println("\tThe next stat is dodge chance.This is a stats that enemies do not have this is the chance to completely avoid all damage.");
-        System.out.println("The way items work is you will chose one to equip and can change it at any time during your action phase(more on that later)");
+        System.out.println("The way items work is you will chose an armour and a weapon to equip and can change them at any time during your action phase(more on that later)");
         System.out.println("Items will be dropped and added directly to your inventory upon successfully killing and enemy.");
         System.out.println("That is all to items feel free to use the item generator to generate some items,however unlike enemies which only use two player stats item generation is much more complex\nSo don't expect results to be identical to actual gameplay");
         System.out.println("Also you're almost done with the directions only one page to go!!");
