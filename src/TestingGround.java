@@ -7,31 +7,32 @@ public class TestingGround {
     public static void main(String[] args) {
         Random random = new Random();
         boolean wasBoss = false;
-
-            int totalTrash = 0;
-            int totalCommon = 0;
-            int totalUncommon = 0;
-            int totalRare = 0;
-            int totalLegendary = 0;
-            int totalUnique = 0;
-            int totalOther = 0;
-            int totalIterations = 0;
-            int max = 0;
-            int min = 100000;
-            for( int i = 0; i < 1000000;i++){
-               ; // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
-
     }
 
-            double averageTrash = (double) totalTrash / totalIterations;
-            double averageCommon = (double) totalCommon / totalIterations;
-            double averageUncommon = (double) totalUncommon / totalIterations;
-            double averageRare = (double) totalRare / totalIterations;
-            double averageLegendary = (double) totalLegendary / totalIterations;
-            double averageUnique = (double) totalUnique / totalIterations;
-            double averageOthers = (double) totalOther / totalIterations;
-            System.out.println(totalIterations);
-            System.out.println(totalOther);
+//            int totalTrash = 0;
+//            int totalCommon = 0;
+//            int totalUncommon = 0;
+//            int totalRare = 0;
+//            int totalLegendary = 0;
+//            int totalUnique = 0;
+//            int totalOther = 0;
+//            int totalIterations = 0;
+//            int max = 0;
+//            int min = 100000;
+//            for( int i = 0; i < 1000000;i++){
+//               ; // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
+//
+//    }
+//
+//            double averageTrash = (double) totalTrash / totalIterations;
+//            double averageCommon = (double) totalCommon / totalIterations;
+//            double averageUncommon = (double) totalUncommon / totalIterations;
+//            double averageRare = (double) totalRare / totalIterations;
+//            double averageLegendary = (double) totalLegendary / totalIterations;
+//            double averageUnique = (double) totalUnique / totalIterations;
+//            double averageOthers = (double) totalOther / totalIterations;
+//            System.out.println(totalIterations);
+//            System.out.println(totalOther);
 
 
 
@@ -42,12 +43,12 @@ public class TestingGround {
 
 //            int average = total/100000;
 //            System.out.println("Average: "+ average +" maximum: "+ max + " Minimum: " + min + " at level: " + playerLevel);
-            System.out.println(max);
+//            System.out.println(max);
         }
 
 
 
-    }
+
 
 
 //int randomMod1 = 10 + random.nextInt((int)(0.9*playerLevel),(int)(2*playerLevel));

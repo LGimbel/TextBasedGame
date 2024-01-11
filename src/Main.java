@@ -1,15 +1,18 @@
-import java.lang.reflect.Field;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 
 public class Main {
-
     public static void main(String[] args) {
         //TODO add game initializer thingymcdo
+        UserInterFace userInterFace = new UserInterFace();
+//        userInterFace.PrintGameInstructionsEnemy();
+//        userInterFace.PrintGameInstructionsItemsAndLoot();
         Weapon fists = new Weapon("Fists",2,0,1,ItemRarity.TRASH);
         Armour leather = new Armour("Leather Apron",0,0,ItemRarity.TRASH);
         HashMap<Item,Integer> playerInv = new HashMap<>();
-        Player player = new Player(58, 58,1,100, fists,leather, playerInv);
+        Player player = new Player(58, 58,1,10, fists,leather, playerInv);
         System.out.println("Hello world!");
         WorldManager worldManager = new WorldManager();
         LootManager lootManager = new LootManager();
@@ -17,6 +20,8 @@ public class Main {
        currentEntity.PrintAllStats();
        Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
        weapon.PintWeaponStats();
+//       Armour armour = lootManager.GenerateArmour(player,currentEntity);
+//       armour.PrintArmourStats();
 
 
 
@@ -33,13 +38,339 @@ enum PotionLevel {
     MINI,LESSER,NORMAL,GREATER,GRAND,OMEGA;
     public PotionLevel getNext() {
         return values()[(this.ordinal() + 1) % values().length];
-}}
+    }
+}
+class UserInterFace{
+    protected String red = "\u001B[31m";
+    protected String green = "\u001B[32m";
+    protected String yellow = "\u001B[33m";
+    protected String blue = "\u001B[34m";
+    protected String magenta = "\u001B[35m";
+    protected String cyan = "\u001B[36m";
+    protected String resetColor = "\u001B[0m";
+    protected WorldManager worldManager = new WorldManager();
+    protected LootManager lootManager = new LootManager();
+    protected Weapon weaponTester = new Weapon("Testing",0,0,1,ItemRarity.UNIQUE);
+    protected Armour armourTester = new Armour("Testing",0,0,ItemRarity.UNIQUE);
+    protected HashMap<Item,Integer> inventoryTester = new HashMap<>();
+    protected Player playerTester = new Player(1,1,0,1,weaponTester,armourTester,inventoryTester);
+    protected int threadInterrupts = 0;
+
+    private final Scanner scanner = new Scanner(System.in);
+    //only a single instance is needed to deal with UI;
+    UserInterFace(){
+    }
+    public void pause(int milliseconds){
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            this.threadInterrupts++;
+        }
+
+    }
+    public void pause(){
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            this.threadInterrupts++;
+        }
+
+    }
+    public void PrintWelcomingMessage(){
+        // welcome user to the game and let them read the rules if desired.
+        final String AsteriskFrame = "\t\t***************************************************\t\t";
+        boolean userUnderstands = false;
+        //region print instructions to user
+        System.out.println(AsteriskFrame);
+        System.out.println("Welcome to the Game!");
+        System.out.println("This game is by typing text into the output terminal.\nWhich conveniently happens to be the area you are reading this text from");
+        System.out.println("Sometimes the terminal will prompt you with yes or no questions these will usually be designated with a Y/N");
+        System.out.println("To answer these question please use Y or y for yes and N or n for no");
+        System.out.println("Other times the terminal will prompt you to enter a number based off of what it prints to the screen.");
+        System.out.println("To answer these prompt you will input the number on the keyboard if the desired number is multiple characters ensure that no spaces are in between them.");
+        System.out.println("Do note that the enter key must be pressed before your input is read so if you wanted to enter the number 12 you would type the 1 key then the 2 key then enter.");
+        System.out.println("Mistakes can be corrected before pressing enter by using the backspace key just make sure you don't end up with any whitespaces in front of your desired input.");
+        System.out.println("Also if you do enter an option that is not available don't worry all user inputs are put through input validation to protect against human error.");
+        System.out.println("Please do not type anything into the terminal if you have not been prompted to do so while it should not crash the program it might.");
+        System.out.println("In the event that you do enter an option that is not available you will be asked to try again and the options will be presented to you again");
+        System.out.println("Also do note that you can't truly break anything regardless of what you enter, as long as you stay out of powershell terminal, but the program might crash if it is not expecting it.");
+        System.out.println("In the event that this happens you will unfortunately have to restart by executing the program.");
+        System.out.println("Here is an example of a Yes or No menu that you could encounter");
+        //endregion
+        do {
+            System.out.println("Do you understand Y/N");
+            String userInput = scanner.nextLine();
+            switch (userInput) {
+                case "Y", "y" -> {
+                    userUnderstands = true;
+                    System.out.println("Great!\nWith that have fun.");
+                    MainMenuMenuOutMostSelectionLogic(false);
+                }
+                case "N", "n" -> {
+                    System.out.println("Oh no feel free to reread the text.");
+                    PrintWelcomingMessage();
+                }
+                default -> System.out.println("Please try again as " + userInput + " is not a valid option.");
+            }
+        }while (!(userUnderstands));
+    }
+    public void MainMenuMenuOutMostSelectionLogic(boolean readInstructions){
+        boolean hasChosen = false;
+        final String MainMenu = readInstructions ? "1:Start Game\n2:View Full Game Instructions\n3:View Graphics Options\n4:Exit Game":"1:Start Game\n2:View Full Game Instructions(Recommended!!)\n3:View Graphics Options\n4:Exit Game";
+        do {
+
+            System.out.println(MainMenu);
+            System.out.println("Please select the action you wish by entering the corresponding number");
+            String userChoice = scanner.nextLine();
+            switch (userChoice){
+                case "1" ->{
+                    hasChosen = true;
+                    System.out.println("The adventure begins!");
+                    //TODO call gameplay begin function.
+                }
+                case "2" ->{
+                    hasChosen = true;
+                    //TODO call instructions ui menu;
+                }
+                case "3" ->{
+                    System.out.print("Loading");
+                    try {
+                        Thread.sleep(800);
+                        System.out.print(".");
+                        Thread.sleep(800);
+                        System.out.print(".");
+                        Thread.sleep(800);
+                        System.out.print(".\n");
+                        Thread.sleep(800);
+                        System.out.println("NO");
+                        Thread.sleep(800);
+                        System.out.println("Just No");
+                    }
+                    catch (InterruptedException e){
+                        System.out.println("Well the threads were busy so have this error");
+                        System.out.println(e.getMessage());
+                        System.out.println("also that is a no on the graphics settings");
+                    }
+
+                }
+                case "4" ->{
+                    System.out.println("Bye then, rude");
+                    hasChosen = true;
+                    System.exit(0);
+                }
+                default -> {
+                    System.out.println(userChoice.concat(" Was not an option please try again"));
+                }
+            }
+        }while(!hasChosen);
+    }
+    public void PrintGameInstructionsEnemy(){
+        //accessed through the MainMenuOuterLoop;
+        //region print statements
+        System.out.println(green + "Welcome to the Enemy section of the Game Instructions." + resetColor);
+        pause(1000);
+        System.out.println("In this game you will battle many enemies and gather tons of loot.");
+        System.out.println("Each enemy you encounter will have unique stats depending on the player's level.");
+        System.out.println("There are a total of 11 enemy stats however you will only care about 6.");
+        System.out.println("The First stat is the name of the enemy\n\tThe name tells two things the enemy, first is what type of creature it is, and the second is whether the creature is a boss or not ");
+        System.out.println("\tThe only difference between a normal enemy and a boss is that bosses have inflated stats and always drop an armour piece and a weapon.(more on these later)");
+        System.out.println("\tNot only do they always drop loot they also have a significantly higher chance to drop better loot and cannot drop trash rarity items.");
+        System.out.println("The next two stats are based on the enemies health. One is current one is max.");
+        System.out.println("\tYou can ignore the max health as monsters will always be at max health upon generation.");
+        System.out.println("The next important stat is the Base damage.");
+        System.out.println("\tThis stat shows how much damage (before modifications) the enemy will do.");
+        System.out.println("\tCurrently there is no damage variance for each hit meaning the only modification is a Critical Hit.(more on this later)");
+        System.out.println("\tThis means everytime you get hit you will be faced with the enemy's base damage which will go against your defense.(more on this later)");
+        System.out.println("The next two important stats are critical hit chance and critical hit damage multiplier");
+        System.out.println("\tCurrently all enemies have a fixed critical hit chance of 5%");
+        System.out.println("\tCurrently all enemies also have a fixed critical hit damage multiplier of 2 times.");
+        System.out.println("\tThe formula for final damage for enemies is: Final Damage = (Base Damage) or in the case of a critical hit: Final Damage = (Base Damage * 2)");
+        System.out.println("The next important stat is the enemy defense.");
+        System.out.println("\tDefense is simple as the damage a enemy takes is (Damage Dealt - Defense).");
+        System.out.println("\tMeaning if you hit a enemy for 10 damage and they have 5 defense their health will go down by 5.");
+        System.out.println("Finally each enemy has a secret value that which is the amount of experience the player gains among killing it");
+        System.out.println("\tIn normal gameplay this value will be hidden from the player.");
+        System.out.println("However now you will be allowed to generate creatures at different player levels and view their stats.");
+        System.out.println("\nNote:\n"+red+"!!DO NOT SET PLAYER VALUE TO 0 OR A NEGATIVE NUMBER IT WILL BREAK THE PROGRAM!!\n"+resetColor);
+        System.out.println("Do also note that there are a few other variables taken into account upon enemy creation so results may vary.");
+        System.out.println("Also note that player level while has no upper bound, setting it to values over 100.0 will make the stats go to extreme levels.Feel free to try though as it wont break.");
+        System.out.println("Finally note that the player level displayed in game may not  be directly the same as the player level input.");
+        //endregion
+        PlayerEntityGenerator();
+    }
+    public void PrintGameInstructionsItemsAndLoot(){
+        System.out.println(green+"Welcome to the Items & Loot Section of the instructions"+ resetColor);
+        pause(400);
+        System.out.println("In the current state of the game there are three different types of loot");
+        System.out.println("\t-Potions of Healing\n\t-Weapons\t-Armour\nI am aware i am using the British spelling but it is objectively better.");
+        System.out.println("First we will go over healing potions");
+        System.out.println("\tPotions are simple they come in a variety of sizes.");
+        System.out.println("\tThese sizes are as follows in order of worst to best\n\tMini\n\tLesser\n\tNormal\n\tGreater\n\tGrand\n\tOMEGA");
+        System.out.println("\tPotions are a common drop and can be consumed in your action phase for some health.");
+        System.out.println("\tBosses will never drop mini health potions and have better rolls overall");
+        System.out.println("\tHealing potions cannot be used to heal over you max health and consuming one that would heal more than the amount of health missing will bring you to full health.");
+        System.out.println("Item Rarity");
+        System.out.println("\tBefore we cover weapons and armour we have to go over rarity.");
+        System.out.println("\tTechnically all items have a rarity, however they do not affect healing potions.");
+        System.out.println("\tFor weapons and armour the rarity is the first stat that is rolled With the other stats being modified by those rarities.");
+        System.out.println("\tThere are 6 levels of rarity which are as follows worst to best"+"\n\tTrash"+red+"\n\tCommon"+blue+"\n\tUncommon"+green+"\n\tRare"+cyan+"\n\tLegendary"+yellow+"\n\tUnique"+resetColor);
+        System.out.println("\tBosses have a higher chance to drop better gear and will never drop Trash quality items.");
+        System.out.println("Weapons");
+        System.out.println("\tWeapons have 3 non-rarity stats and they are all important.");
+        System.out.println("\tThe first is base damage which works the same way it does for enemies.");
+        System.out.println("\tThe next stat is the critical hit chance which unlike in enemies is based on the rarity of the item.");
+        System.out.println("\tFinally the critical hit damage multiplier is, like critical hit chance, tied to item rarity.");
+        System.out.println("Armour");
+        System.out.println("\tArmour only has two non-rarity stats.");
+        System.out.println("\tThe first is defense which works the same way as it does for enemies so all incoming damage will be reduced by your defense.");
+        System.out.println("\tIf your defense is higher that the incoming damage you will take no damage.");
+        System.out.println("\tThe next stat is dodge chance.This is a stats that enemies do not have this is the chance to completely avoid all damage.");
+        System.out.println("The way items work is you will chose one to equip and can change it at any time during your action phase(more on that later)");
+        System.out.println("Items will be dropped and added directly to your inventory upon successfully killing and enemy.");
+        System.out.println("That is all to items feel free to use the item generator to generate some items,however unlike enemies which only use two player stats item generation is much more complex\nSo don't expect results to be identical to actual gameplay");
+        System.out.println("Also you're almost done with the directions only one page to go!!");
+
+
+    }
+    public void PlayerWeaponAndArmourGenerator(){
+        double playerLevel = playerTester.getPlayerLevel();
+        final String LootGenerationMenu = ("1:Generate new Weapon at player level: " + playerLevel +"\n" +"2:Generate a new Armour piece at player level: " + playerLevel + "3:Change player level\n4:Return to Enemy section of Instructions\n" + "5:Return to Items & Loot section of Instructions\n6:Proceed to Player Stats and Gameplay steps\n7:Return to Main Menu");
+        String userChoice;
+        boolean again = true;
+        System.out.println(LootGenerationMenu);
+        userChoice = scanner.nextLine();
+
+
+        switch (userChoice){
+            case "1"->{
+                lootManager.GenerateWeapon(playerTester,worldManager.GenerateNewEntity(playerTester)).PintWeaponStats();
+                break;
+            }
+            case "2"->{
+                lootManager.GenerateArmour(playerTester,worldManager.GenerateNewEntity(playerTester)).PrintArmourStats();
+                break;
+            }
+            case "3"->{
+                System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
+                try {
+                    playerLevel = Double.parseDouble(scanner.nextLine());
+                    System.out.println("Player level set.");
+                }
+                catch (Exception e){
+                    System.out.println("um OH NOO AHHHHHHHH!!");
+                    pause(1000);
+                    e.printStackTrace();
+                    System.out.println("Look what you did\n"+ e.getMessage() + "\nthis probably means you entered a non numerical character but I got you\n\n");
+                }
+                playerTester.setPlayerLevel(playerLevel);
+                break;
+            }
+            case "4"->{
+                again = false;
+                PrintGameInstructionsEnemy();
+                break;
+            }
+            case "5" ->{
+                again = false;
+                PrintGameInstructionsItemsAndLoot();
+                break;
+            }
+            case "6"->{
+                //TODO go to gameplay phase instructions
+            }
+            case "7" ->{
+                again = false;
+                MainMenuMenuOutMostSelectionLogic(true);
+
+            }
+        }
+       if (again) PlayerWeaponAndArmourGenerator();
+    }
+
+
+
+    public void PlayerEntityGenerator(){
+        double playerLevel = playerTester.getPlayerLevel();
+        String userChoice;
+        boolean again = true;
+        final String EntityGenerationMenu = ("1:Generate new entity at player level: " + playerLevel +"\n" + "2:Change player level\n3:Return to Enemy section of Instructions\n" + "4:Proceed to Items & Loot section of Instructions\n5:Proceed to Player Stats and Gameplay steps\n6:Return to Main Menu");
+        System.out.println(EntityGenerationMenu);
+        userChoice = scanner.nextLine();
+        switch (userChoice){
+            case "1"->{
+                worldManager.GenerateNewEntity(playerTester).PrintAllStats();
+                break;
+            }
+            case "2"->{
+                System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
+                try {
+                    playerLevel = Double.parseDouble(scanner.nextLine());
+                    System.out.println("Player level set.");
+                }
+                catch (Exception e){
+                    System.out.println("um OH NOO AHHHHHHHH!!");
+                    pause(1000);
+                    e.printStackTrace();
+                    System.out.println("Look what you did\n"+ e.getMessage() + "\nthis probably means you entered a non numerical character but I got you\n\n");
+                }
+                playerTester.setPlayerLevel(playerLevel);
+                break;
+            }
+            case "3"->{
+                again = false;
+                PrintGameInstructionsEnemy();
+                break;
+            }
+            case "4"->{
+                again = false;
+                PrintGameInstructionsItemsAndLoot();
+                break;
+            }
+            case "5"->{
+                //TODO add player stats and gameplay phases section of instructions;
+            }
+            case "6"->{
+                again = false;
+                MainMenuMenuOutMostSelectionLogic(true);
+                break;
+            }
+            default -> {
+                System.out.println(userChoice.concat(" Was not an option please try again"));
+                break;
+            }
+        }
+        if(again)PlayerEntityGenerator();
+    }
+}
+class FightManager{
+        //will contain all functions to deal with battles
+        // only one instance needed.
+    FightManager(){
+
+    }
+    public void MainBattleLoop(Player player,Entity entity){
+        // this will be the main battle loop that will execute until the entity is dead the player is dead or the player flees
+        //will be dependent on player input as it will call on things from the user interface class.
+        // turn will go player Action, entity action during the player action they can either attack, use and item, flee or any combination,
+        // a player may consume as many items as desired in one turn
+
+    }
+
+    }
+
 class LootManager{
     /*
     the loot manager is used for dynamically generating loot as well as determining what loot if any is dropped.
     the loot manager is not to be used to modify items after ones creation
      */
-    private Random random = new Random();
+    protected String red = "\u001B[31m";
+    protected String green = "\u001B[32m";
+    protected String yellow = "\u001B[33m";
+    protected String blue = "\u001B[34m";
+    protected String magenta = "\u001B[35m";
+    protected String cyan = "\u001B[36m";
+    protected String resetColor = "\u001B[0m";
+    private final Random random = new Random();
     //region lists of loot modifier names
     private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian","Ionized","Flaming","Destructive","Unstoppable");
     private final List<String> NegativeWeaponNameModifiers = Arrays.asList("Rusty","Damaged","Broken","Weak","Warped","Fractured","Dull","Feeble","Cracked","Dilapidated");
@@ -104,8 +435,7 @@ class LootManager{
         int baseDamage = GenerateWeaponBaseDamage(rarity,playerLevel);
         int criticalHitChance = GenerateWeaponCriticalChance(rarity);
         double criticalHitDamageMultiplier = GenerateWeaponCriticalDamageMultiplier(rarity);
-        Weapon newWeapon = new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
-        return newWeapon;
+        return new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
         //endregion
     }
     public Armour GenerateArmour(Player player,Entity entity){
@@ -117,8 +447,7 @@ class LootManager{
         int defense = GenerateArmourDefense(playerLevel,rarity);
         int dodgeChance = GenerateArmourDodgeChance(rarity);
         //endregion
-        Armour armour = new Armour(itemName,defense,dodgeChance,rarity);
-        return armour;
+        return new Armour(itemName,defense,dodgeChance,rarity);
 
     }
     public HealthPotion GenerateHealthPotion(Player player,Entity entity){
@@ -157,7 +486,6 @@ class LootManager{
         return healthPotion;
 
         }
-
     public ItemRarity GenerateItemRarity(boolean wasBoss){
         int lootRoll = random.nextInt(1,101); // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
         ItemRarity rarity = ItemRarity.COMMON;
@@ -203,6 +531,7 @@ class LootManager{
         String modifier;
         String weapon;
         String finalName;
+        String coloredName;
         if(rarity == ItemRarity.TRASH){
             modifier = NegativeWeaponNameModifiers.get(random.nextInt(0,NegativeWeaponNameModifiers.size()));
         }
@@ -211,7 +540,15 @@ class LootManager{
         }
         weapon = WeaponNames.get(random.nextInt(0,WeaponNames.size()));
         finalName = modifier.concat(" ").concat(weapon);
-        return finalName;
+        coloredName = switch (rarity){
+            case TRASH -> finalName;
+            case COMMON -> red.concat(finalName).concat(resetColor);
+            case UNCOMMON ->blue.concat(finalName).concat(resetColor);
+            case RARE -> green.concat(finalName).concat(resetColor);
+            case LEGENDARY -> cyan.concat(finalName).concat(resetColor);
+            case UNIQUE -> yellow.concat(finalName).concat(resetColor);
+        };
+        return coloredName;
 
     }
     public int GenerateWeaponBaseDamage(ItemRarity rarity,double playerLevel){
@@ -227,11 +564,10 @@ class LootManager{
             case LEGENDARY -> preAugmentDamage * 2.3;
             case UNIQUE -> preAugmentDamage * 3;
         };
-        int finalDamage = (int) augmentedDamage;
-        return finalDamage;
+        return (int) augmentedDamage;
     }
     public int GenerateWeaponCriticalChance(ItemRarity rarity){
-        int criticalHitChance = switch (rarity){
+        return switch (rarity){
             case TRASH -> 1;
             case COMMON -> 5;
             case UNCOMMON -> 10;
@@ -239,10 +575,9 @@ class LootManager{
             case LEGENDARY -> 20;
             case UNIQUE -> 25;
         };
-        return criticalHitChance;
     }
     public double GenerateWeaponCriticalDamageMultiplier(ItemRarity rarity){
-        double critMultiplier = switch (rarity){
+        return switch (rarity){
             case TRASH -> 1;
             case COMMON -> 1.5;
             case UNCOMMON -> 1.7;
@@ -250,13 +585,12 @@ class LootManager{
             case LEGENDARY -> 2.2;
             case UNIQUE -> 2.5;
         };
-        return critMultiplier;
     }
     //endregion
     //region armour specific generations
     public int GenerateArmourDefense(double playerLevel,ItemRarity rarity){
         int baseDefenseLevel = (int) playerLevel;
-        int randomModifier = random.nextInt(0,baseDefenseLevel);
+        int randomModifier = random.nextInt(0,baseDefenseLevel/4);
         int preAugmentDefense = baseDefenseLevel + randomModifier;
         int augmentedDefense = (int)switch (rarity){
             case TRASH -> preAugmentDefense * 0.5;
@@ -266,7 +600,7 @@ class LootManager{
             case LEGENDARY -> preAugmentDefense * 2.5;
             case UNIQUE -> preAugmentDefense * 3.5;
         };
-        return augmentedDefense;
+        return Math.max(augmentedDefense - baseDefenseLevel,0);
     }
     public int GenerateArmourDodgeChance(ItemRarity rarity){
         int baseRandom = random.nextInt(0,11);
@@ -285,6 +619,7 @@ class LootManager{
         String modifier;
         String armourType;
         String finalName;
+        String coloredName;
         if(rarity == ItemRarity.TRASH){
             modifier = NegativeArmourModifiers.get(random.nextInt(0,NegativeArmourModifiers.size()));
         }
@@ -293,7 +628,15 @@ class LootManager{
         }
         armourType = ArmourNames.get(random.nextInt(0,ArmourNames.size()));
         finalName = modifier.concat(" ").concat(armourType);
-        return finalName;
+        coloredName = switch (rarity){
+            case TRASH -> finalName;
+            case COMMON -> red.concat(finalName).concat(resetColor);
+            case UNCOMMON ->blue.concat(finalName).concat(resetColor);
+            case RARE -> green.concat(finalName).concat(resetColor);
+            case LEGENDARY -> cyan.concat(finalName).concat(resetColor);
+            case UNIQUE -> yellow.concat(finalName).concat(resetColor);
+        };
+        return coloredName;
     }
     //endregion
 
@@ -325,8 +668,7 @@ class WorldManager {
          double entityCriticalMultiplier = 2.0;
          String entityName = GenerateCreatureName() ;
          String trueName = isBoss ? "Boss ".concat(entityName): entityName;
-         Entity entity = new Entity(isBoss,isEscapable,trueName,entityExperience,entityHealth,entityBaseDamage,entityCriticalHitChance,entityCriticalMultiplier,entityDefense,isDead);
-         return entity;
+        return new Entity(isBoss,isEscapable,trueName,entityExperience,entityHealth,entityBaseDamage,entityCriticalHitChance,entityCriticalMultiplier,entityDefense,isDead);
          //endregion
 
     }
@@ -334,15 +676,13 @@ class WorldManager {
     public int GenerateEntityHealth(double playerLevel){
         int randomMod1 = 10 + (random.nextInt((int) (2 * playerLevel), (int) (8 * playerLevel)));
         //refine as health will normally be higher that desired
-        int refinedHealth = (int) (randomMod1 - ((random.nextInt((int) (0.5 * playerLevel), (int) (8 * playerLevel))) % (playerLevel / random.nextInt(1, 6))));
-        return refinedHealth;
+        return (int) (randomMod1 - ((random.nextInt((int) (0.5 * playerLevel), (int) (8 * playerLevel))) % (playerLevel / random.nextInt(1, 6))));
     }
     public int GenerateEntityBaseDamage(double playerLevel) {
         int startDamage = 2 + (int)(playerLevel/2);
         boolean modifier = random.nextBoolean();
         int damageAdjust = (int) ((playerLevel*10)/(15));
-        int finalDamage = modifier ? startDamage + damageAdjust: (int) ((startDamage - damageAdjust) + playerLevel/1.3);
-        return  finalDamage;
+        return modifier ? startDamage + damageAdjust: (int) ((startDamage - damageAdjust) + playerLevel/1.3);
     }
     public int GenerateEntityDefense(int killCount){
        if(killCount < 15){
@@ -362,9 +702,9 @@ class WorldManager {
        }
     }
     public boolean GenerateBossStatus(double playerLevel,int killCount){
-        int bossHits[] = new int[20];
+        int[] bossHits = new int[20];
         bossHits[0] = 42;
-        if ( killCount % 3 == 0);{
+        if ( killCount % 3 == 0){
             bossHits[1] = 100;
             bossHits[2] = 99;
             bossHits[3] = 98;
@@ -393,12 +733,10 @@ class WorldManager {
     public String GenerateCreatureName(){
         String attribute = attributes.get(random.nextInt(0,attributes.size()));
         String creature = Creatures.get(random.nextInt(0,Creatures.size()));
-        String totalName = attribute.concat(" ").concat(creature);
-        return totalName;
+        return attribute.concat(" ").concat(creature);
     }
     public double CalculateExperienceDrop(int health,double playerLevel){
-        double experienceDrop = health/(60 + playerLevel*3);
-        return experienceDrop;
+        return health/(60 + playerLevel*3.2);
     }
 
 
@@ -492,11 +830,13 @@ class Entity {
     //endregion
     //region utilities
     public void PrintAllStats(){
+        System.out.println("Name is: " + entityName);
         System.out.println("Health: " + entityHealth);
+        System.out.println("Max Health is: " + entityMaxHealth);
         System.out.println("Base Damage is: " + entityBaseDamage);
         System.out.println("defense is: " + entityDefense);
         System.out.println("experience is: " + entityExperience);
-        System.out.println("Name is: " + entityName);
+
     }
 
 
@@ -532,6 +872,9 @@ class Armour extends Item{
     }
     public int getDodgeChance(){
         return dodgeChance;
+    }
+    public void PrintArmourStats(){
+        System.out.println(getItemName() + "\nDefense: " + getDefense() + "\nDodge Chance: " + getDodgeChance() + "\nRarity: " + getRarity() );
     }
 }
 class HealthPotion extends Item{
@@ -634,7 +977,7 @@ class Player{
         this.entitiesDefeated = newEntitiesDefeated;
         // not to be used for increment after battle success instead for setting directly if needed mostly likely to be depreciated.
     }
-    public void setPlayerLevel(int newPlayerLevel){
+    public void setPlayerLevel(double newPlayerLevel){
         // not to be used for directly incrementing the player level after successful battle but instead for direct change of the players
         // level.
         this.playerLevel = newPlayerLevel;
