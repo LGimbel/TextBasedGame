@@ -1108,11 +1108,6 @@ class Player{
                 damagePlayer(0);
             }
         }
-        if (rawDamageIn - defense <= 0){
-            damagePlayer(0);
-        }
-        else{
-            damagePlayer((rawDamageIn - defense));
-        }
+        damagePlayer(Math.max(rawDamageIn - defense, 0));
     }
 }
