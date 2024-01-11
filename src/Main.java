@@ -1,3 +1,4 @@
+import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -29,33 +30,74 @@ enum ItemRarity{
     TRASH,COMMON,UNCOMMON,RARE,LEGENDARY,UNIQUE
 }
 enum PotionLevel {
-    MINI,LESSER,NORMAL,GREATER,GRAND,OMEGA
-}
+    MINI,LESSER,NORMAL,GREATER,GRAND,OMEGA;
+    public PotionLevel getNext() {
+        return values()[(this.ordinal() + 1) % values().length];
+}}
 class LootManager{
+    /*
+    the loot manager is used for dynamically generating loot as well as determining what loot if any is dropped.
+    the loot manager is not to be used to modify items after ones creation
+     */
     private Random random = new Random();
     //region lists of loot modifier names
-    private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian"
-            ,"Ionized","Flaming","Destructive","Unstoppable");
+    private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian","Ionized","Flaming","Destructive","Unstoppable");
     private final List<String> NegativeWeaponNameModifiers = Arrays.asList("Rusty","Damaged","Broken","Weak","Warped","Fractured","Dull","Feeble","Cracked","Dilapidated");
     private final List<String> WeaponNames = Arrays.asList("Claymore","Broad Sword","Reaper","Shadow's Bane","Ember Blade","Icy Talon","Glaive","Polearm","Night Fang","Trident","Dagger","Dirk","Ice-Pick","Gladius","Pike","War Hammer","Spear","Cleaver","Flail","Mace");
-
+    private final List<String> PositiveArmourModifiers = Arrays.asList("Adamantine","Frost Bound","Glacial Steel","Polished","Sapphire","Timeless","Glistening","Impenetrable","Thundering","Dragon Scale");
+    private final List<String> ArmourNames = Arrays.asList("Mail","Plate","Plate-Mail","Breastplate","Brigandine","Cloak","Tunic","Robes","Scale Mail");
+    private final List<String> NegativeArmourModifiers = Arrays.asList("Broken","Weak","Rusty","Threadbare","Shoddy","Tattered","Shabby");
     //endregion
-    // will contain functions to dynamically allocate loot drops for killed Entities.
     LootManager(){
         //constructor
     }
+    public void RollAllLootDrops(Player player,Entity entity){
+        RollForHealthPotionDrop(player,entity);
+        RollForItemDrop(player,entity);
+        //TODO add one for gold but that also requires adding the gold infrastructure which can come later.
+    }
+    public void RollForHealthPotionDrop(Player player,Entity entity){
+        boolean wasBoss = entity.isBoss();
+        if(wasBoss) {
+            player.addToInventory(GenerateHealthPotion(player,entity),1);
+        }
+        else {
+            if(random.nextBoolean()){
+                player.addToInventory(GenerateHealthPotion(player,entity),1);
+            }
+        }
 
+
+
+    }
+    public void RollForItemDrop(Player player,Entity entity){
+        boolean wasBoss = entity.isBoss();
+        if(wasBoss){
+            //guarantee that bosses will drop loot
+            player.addToInventory((GenerateArmour(player,entity)),1);
+            player.addToInventory(GenerateWeapon(player,entity),1);
+        }
+        else {
+            boolean itemType = random.nextBoolean();
+            boolean rollOne = random.nextBoolean();
+            boolean rollTwo = random.nextBoolean();
+            if (rollOne || rollTwo){
+                if (itemType) {
+                    player.addToInventory(GenerateArmour(player,entity), 1);
+                } else {
+                    player.addToInventory(GenerateWeapon(player,entity), 1);
+                }
+            }
+        }
+    }
     public Weapon GenerateWeapon(Player player,Entity entity){
         //region player stats retrieved
        final double playerLevel = player.getPlayerLevel();
-       final int playerKills = player.getEntitiesDefeated();
         //endregion
         // region entity stats retrieved.
-        final double entityExperience = entity.getEntityExperience();
-        final int entityStartHealth = entity.getEntityMaxHealth();
         final boolean wasBoss = entity.isBoss();
         //endregion
-        //region weapon stats !to be dynamically generated
+        //region weapon stats to be dynamically generated
         //further documentation for the stats generated here can be found in the lootTable.txt file
         ItemRarity rarity = GenerateItemRarity(wasBoss);
         String weaponName = GenerateWeaponName(rarity);
@@ -66,18 +108,56 @@ class LootManager{
         return newWeapon;
         //endregion
     }
-    //TODO added dynamic armour generation and figure out entity drop stuff for all items and dealing with non weapon non armour items such as healing and gold.
-    public void GenerateArmour(Player player,Entity entity){
+    public Armour GenerateArmour(Player player,Entity entity){
         double playerLevel = player.getPlayerLevel();
         boolean wasBoss = entity.isBoss();
         //region armour stats to be generated
         ItemRarity rarity = GenerateItemRarity(wasBoss);
-        String itemName;
-        int defense;
-        int dodgeChance;
+        String itemName = GenerateArmourName(rarity);
+        int defense = GenerateArmourDefense(playerLevel,rarity);
+        int dodgeChance = GenerateArmourDodgeChance(rarity);
         //endregion
+        Armour armour = new Armour(itemName,defense,dodgeChance,rarity);
+        return armour;
 
     }
+    public HealthPotion GenerateHealthPotion(Player player,Entity entity){
+        boolean wasBoss = entity.isBoss();
+        PotionLevel potionLevel = PotionLevel.MINI;
+        String potionName = "Mini Health Potion";
+        int randomChance = random.nextInt(0,101);
+            if(randomChance <= 10){
+                potionLevel = PotionLevel.MINI;
+                potionName = "Mini Health Potion";
+            } else if (randomChance <= 50) {
+                potionLevel = PotionLevel.LESSER;
+            }
+            else if (randomChance <= 75 ){
+                potionLevel = PotionLevel.NORMAL;
+            } else if (randomChance <= 90) {
+                potionLevel = PotionLevel.GREATER;
+
+            } else if (randomChance <= 97) {
+                potionLevel = PotionLevel.GRAND;
+
+            } else if (randomChance <= 100) {
+                potionLevel = PotionLevel.OMEGA;
+            }
+        if (wasBoss && potionLevel != PotionLevel.OMEGA) {
+            potionLevel = potionLevel.getNext();
+        }
+        HealthPotion healthPotion = new HealthPotion(switch (potionLevel){
+            case MINI -> "Mini Potion of Healing";
+            case LESSER -> "Lesser Potion of Healing";
+            case NORMAL -> "Potion of Healing";
+            case GREATER -> "Greater Potion of Healing";
+            case GRAND -> "Grand Potion of Healing";
+            case OMEGA -> "Omega Potion of Healing";
+        },potionLevel,ItemRarity.COMMON);
+        return healthPotion;
+
+        }
+
     public ItemRarity GenerateItemRarity(boolean wasBoss){
         int lootRoll = random.nextInt(1,101); // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
         ItemRarity rarity = ItemRarity.COMMON;
@@ -174,7 +254,7 @@ class LootManager{
     }
     //endregion
     //region armour specific generations
-    public int GenerateDefense(double playerLevel,ItemRarity rarity){
+    public int GenerateArmourDefense(double playerLevel,ItemRarity rarity){
         int baseDefenseLevel = (int) playerLevel;
         int randomModifier = random.nextInt(0,baseDefenseLevel);
         int preAugmentDefense = baseDefenseLevel + randomModifier;
@@ -188,11 +268,34 @@ class LootManager{
         };
         return augmentedDefense;
     }
-    //TODO finish armour generation.
-    public void GenerateDodgeChance(ItemRarity rarity){
+    public int GenerateArmourDodgeChance(ItemRarity rarity){
         int baseRandom = random.nextInt(0,11);
+        int finalDodgeChance = switch (rarity){
+            case TRASH -> baseRandom - 5;
+            case COMMON -> baseRandom;
+            case UNCOMMON -> baseRandom + 1;
+            case RARE -> baseRandom + 3;
+            case LEGENDARY -> baseRandom + 5;
+            case UNIQUE -> baseRandom + 7;
+        };
+        return Math.max(finalDodgeChance, 0);
 
     }
+    public String GenerateArmourName(ItemRarity rarity){
+        String modifier;
+        String armourType;
+        String finalName;
+        if(rarity == ItemRarity.TRASH){
+            modifier = NegativeArmourModifiers.get(random.nextInt(0,NegativeArmourModifiers.size()));
+        }
+        else {
+            modifier = PositiveArmourModifiers.get(random.nextInt(0,PositiveArmourModifiers.size()));
+        }
+        armourType = ArmourNames.get(random.nextInt(0,ArmourNames.size()));
+        finalName = modifier.concat(" ").concat(armourType);
+        return finalName;
+    }
+    //endregion
 
 }
 class WorldManager {
@@ -224,7 +327,6 @@ class WorldManager {
          String trueName = isBoss ? "Boss ".concat(entityName): entityName;
          Entity entity = new Entity(isBoss,isEscapable,trueName,entityExperience,entityHealth,entityBaseDamage,entityCriticalHitChance,entityCriticalMultiplier,entityDefense,isDead);
          return entity;
-         //TODO add loot drop to entity and make it predetermined here for each entity
          //endregion
 
     }
