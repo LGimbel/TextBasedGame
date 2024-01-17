@@ -1,4 +1,3 @@
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -6,16 +5,21 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         //TODO add game initializer thingymcdo
-        UserInterFace userInterFace = new UserInterFace();
+          UserInterFace userInterFace = UserInterFace.getUserInterFace();
+          LootManager lootManager = LootManager.getLootManager();
+          Player player = Player.getPublicPlayer();
+          FightManager fightManager = new FightManager();
+          WorldManager worldManager = WorldManager.getPublicWorldManager();
+          for(int i = 0; i < 100; i++) {
+              fightManager.MainBattleLoop(player, worldManager.GenerateNewEntity(player));
+
+          }
 //        userInterFace.PrintGameInstructionsEnemy();
 //        userInterFace.PrintGameInstructionsItemsAndLoot();
-        Weapon fists = new Weapon("Fists",2,0,1,ItemRarity.TRASH);
-        Armour leather = new Armour("Leather Apron",0,0,ItemRarity.TRASH);
-        HashMap<Item,Integer> playerInv = new HashMap<>();
-        Player player = new Player(58, 58,1,10, fists,leather, playerInv);
+
+
         System.out.println("Hello world!");
-        WorldManager worldManager = new WorldManager();
-        LootManager lootManager = new LootManager();
+
        Entity currentEntity = worldManager.GenerateNewEntity(player);
        currentEntity.PrintAllStats();
        Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
@@ -30,6 +34,9 @@ public class Main {
     }
 }
 //region enumerations
+enum BattleOption{
+    FIGHT,CHECK,FLEE,INVENTORY
+        }
 
 enum ItemRarity{
     TRASH,COMMON,UNCOMMON,RARE,LEGENDARY,UNIQUE
@@ -55,10 +62,13 @@ class UserInterFace{
     protected HashMap<Item,Integer> inventoryTester = new HashMap<>();
     protected Player playerTester = new Player(1,1,0,1,weaponTester,armourTester,inventoryTester);
     protected int threadInterrupts = 0;
-
     private final Scanner scanner = new Scanner(System.in);
     //only a single instance is needed to deal with UI;
-    UserInterFace(){
+    private static UserInterFace PublicUserInterFace = new UserInterFace();
+   UserInterFace(){
+    }
+    static UserInterFace getUserInterFace(){
+        return PublicUserInterFace;
     }
     public void pause(int milliseconds){
         try {
@@ -118,7 +128,6 @@ class UserInterFace{
         boolean hasChosen = false;
         final String MainMenu = readInstructions ? "1:Start Game\n2:View Full Game Instructions\n3:View Graphics Options\n4:Exit Game":"1:Start Game\n2:View Full Game Instructions(Recommended!!)\n3:View Graphics Options\n4:Exit Game";
         do {
-
             System.out.println(MainMenu);
             System.out.println("Please select the action you wish by entering the corresponding number");
             String userChoice = scanner.nextLine();
@@ -130,7 +139,7 @@ class UserInterFace{
                 }
                 case "2" ->{
                     hasChosen = true;
-                    //TODO call instructions ui menu;
+                    PrintGameInstructionsEnemy();
                 }
                 case "3" ->{
                     System.out.print("Loading");
@@ -287,9 +296,6 @@ class UserInterFace{
         }
        if (again) PlayerWeaponAndArmourGenerator();
     }
-
-
-
     public void PlayerEntityGenerator(){
         double playerLevel = playerTester.getPlayerLevel();
         String userChoice;
@@ -342,8 +348,42 @@ class UserInterFace{
         }
         if(again)PlayerEntityGenerator();
     }
+    public BattleOption PlayerFightUi(){
+        boolean hasChosen = false;
+        BattleOption chosenOption = BattleOption.INVENTORY;
+        final String PlayerOptionsMenu =  "1:Fight\n2:Check enemy stats\n3:Attempt to flee\n4:Inventory";
+        String playerChoice;
+        do {
+        System.out.println(PlayerOptionsMenu);
+        playerChoice = scanner.nextLine();
+        switch (playerChoice){
+            case "1"->{
+                hasChosen = true;
+                chosenOption = BattleOption.FIGHT;
+            }
+            case "2"->{
+                hasChosen = true;
+                chosenOption = BattleOption.CHECK;
+            }
+            case "3"->{
+                hasChosen = true;
+                chosenOption = BattleOption.FLEE;
+            }
+            case "4"->{
+                hasChosen = true;
+            }
+            default -> {
+                System.out.println(playerChoice.concat(" was not an option please try again."));
+            }
+        }
+    }while (!hasChosen);
+        return chosenOption;
+    }
 }
 class FightManager{
+    //todo add public version of fight manager.
+    UserInterFace userInterFace = UserInterFace.getUserInterFace();
+    LootManager lootManager = LootManager.getLootManager();
         //will contain all functions to deal with battles
         // only one instance needed.
     FightManager(){
@@ -354,7 +394,70 @@ class FightManager{
         //will be dependent on player input as it will call on things from the user interface class.
         // turn will go player Action, entity action during the player action they can either attack, use and item, flee or any combination,
         // a player may consume as many items as desired in one turn
+        do{
+            playerTurn(player,entity);
+            if (!entity.isDead() && !entity.isAbandoned()){
+                enemyTurn(player,entity);
+                System.out.println("Current player health is: " + player.getCurrentHealth());
+            }
+        }while ((!entity.isDead() && !entity.isAbandoned() && !player.isPlayerDead()));
+        if (entity.isDead()){
+            lootManager.RollAllLootDrops(player,entity);
+            player.AddExp(entity.getEntityExperience());
 
+        }
+        else if (entity.isAbandoned()){
+            System.out.println("You escape with your life.");
+        }
+
+        if (!player.isPlayerDead()) {
+            System.out.println("current health: "+ player.getCurrentHealth());
+        }
+        else {
+            System.out.println(userInterFace.red+"You are dead"+userInterFace.resetColor);
+        }
+
+    }
+    public void enemyTurn(Player player, Entity entity){
+        int damage = entity.CalculateDamageOut();
+        System.out.println(entity.getEntityName() + " tries to hit you for " + damage);
+        userInterFace.pause(200);
+        player.CalculateAndDealDamageTaken(damage);
+
+    }
+    public void playerTurn(Player player, Entity entity) {
+        boolean spentAction = false;
+        do {
+            BattleOption chosenAction = userInterFace.PlayerFightUi();
+            switch (chosenAction) {
+                case FIGHT -> {
+                    spentAction = true;
+                    int damage = player.CalculateDamageDealt();
+                    int defence = entity.getEntityDefense();
+                    entity.DamageEntity(damage);
+                    System.out.println("You hit the " + entity.getEntityName() + " for " + damage + " raw damage!");
+                    userInterFace.pause(200);
+                    System.out.println(entity.getEntityName() + " took " + (damage - defence) + " damage");
+                    break;
+                }
+                case CHECK -> {
+                    entity.PlayerCheck();
+
+
+                }
+                case FLEE -> {
+                    boolean fleeSuccess = entity.AttemptToFlee();
+                    if (fleeSuccess) {
+                        //call flee function
+                    }
+
+                    break;
+                }
+                case INVENTORY -> {
+                    //TODO inventory management hell
+                }
+            }
+        }while (!spentAction);
     }
 
     }
@@ -364,25 +467,31 @@ class LootManager{
     the loot manager is used for dynamically generating loot as well as determining what loot if any is dropped.
     the loot manager is not to be used to modify items after ones creation
      */
-    protected String red = "\u001B[31m";
-    protected String green = "\u001B[32m";
-    protected String yellow = "\u001B[33m";
-    protected String blue = "\u001B[34m";
-    protected String magenta = "\u001B[35m";
-    protected String cyan = "\u001B[36m";
-    protected String resetColor = "\u001B[0m";
+    private static LootManager PubliclootManager = new LootManager();
+    protected final String red = "\u001B[31m";
+    protected final String green = "\u001B[32m";
+    protected final String yellow = "\u001B[33m";
+    protected final String blue = "\u001B[34m";
+    protected final String magenta = "\u001B[35m";
+    protected final String cyan = "\u001B[36m";
+    protected final String resetColor = "\u001B[0m";
+    protected final String white = "\u001B[37m";
     private final Random random = new Random();
     //region lists of loot modifier names
     private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian","Ionized","Flaming","Destructive","Unstoppable");
     private final List<String> NegativeWeaponNameModifiers = Arrays.asList("Rusty","Damaged","Broken","Weak","Warped","Fractured","Dull","Feeble","Cracked","Dilapidated");
     private final List<String> WeaponNames = Arrays.asList("Claymore","Broad Sword","Reaper","Shadow's Bane","Ember Blade","Icy Talon","Glaive","Polearm","Night Fang","Trident","Dagger","Dirk","Ice-Pick","Gladius","Pike","War Hammer","Spear","Cleaver","Flail","Mace");
     private final List<String> PositiveArmourModifiers = Arrays.asList("Adamantine","Frost Bound","Glacial Steel","Polished","Sapphire","Timeless","Glistening","Impenetrable","Thundering","Dragon Scale");
-    private final List<String> ArmourNames = Arrays.asList("Mail","Plate","Plate-Mail","Breastplate","Brigandine","Cloak","Tunic","Robes","Scale Mail");
+    private final List<String> ArmourNames = Arrays.asList("Mail","Plate","Plate-Mail","Breastplate","Brigandine","Cloak","Tunic","Robe","Scale Mail");
     private final List<String> NegativeArmourModifiers = Arrays.asList("Broken","Weak","Rusty","Threadbare","Shoddy","Tattered","Shabby");
     //endregion
     LootManager(){
         //constructor
     }
+
+    public static LootManager getLootManager() {
+        return PubliclootManager;
+        }
     public void RollAllLootDrops(Player player,Entity entity){
         RollForHealthPotionDrop(player,entity);
         RollForItemDrop(player,entity);
@@ -391,11 +500,11 @@ class LootManager{
     public void RollForHealthPotionDrop(Player player,Entity entity){
         boolean wasBoss = entity.isBoss();
         if(wasBoss) {
-            player.addToInventory(GenerateHealthPotion(player,entity),1);
+            player.addToInventory(GenerateHealthPotion(entity),1);
         }
         else {
             if(random.nextBoolean()){
-                player.addToInventory(GenerateHealthPotion(player,entity),1);
+                player.addToInventory(GenerateHealthPotion(entity),1);
             }
         }
 
@@ -451,14 +560,12 @@ class LootManager{
         return new Armour(itemName,defense,dodgeChance,rarity);
 
     }
-    public HealthPotion GenerateHealthPotion(Player player,Entity entity){
+    public HealthPotion GenerateHealthPotion(Entity entity){
         boolean wasBoss = entity.isBoss();
         PotionLevel potionLevel = PotionLevel.MINI;
-        String potionName = "Mini Health Potion";
         int randomChance = random.nextInt(0,101);
             if(randomChance <= 10){
                 potionLevel = PotionLevel.MINI;
-                potionName = "Mini Health Potion";
             } else if (randomChance <= 50) {
                 potionLevel = PotionLevel.LESSER;
             }
@@ -477,12 +584,12 @@ class LootManager{
             potionLevel = potionLevel.getNext();
         }
         HealthPotion healthPotion = new HealthPotion(switch (potionLevel){
-            case MINI -> "Mini Potion of Healing";
-            case LESSER -> "Lesser Potion of Healing";
-            case NORMAL -> "Potion of Healing";
-            case GREATER -> "Greater Potion of Healing";
-            case GRAND -> "Grand Potion of Healing";
-            case OMEGA -> "Omega Potion of Healing";
+            case MINI -> white.concat("Mini Potion of Healing").concat(resetColor);
+            case LESSER -> red.concat("Lesser Potion of Healing").concat(resetColor);
+            case NORMAL -> blue.concat("Potion of Healing").concat(resetColor);
+            case GREATER -> green.concat("Greater Potion of Healing").concat(resetColor);
+            case GRAND -> cyan.concat("Grand Potion of Healing").concat(resetColor);
+            case OMEGA -> yellow.concat("Omega Potion of Healing").concat(resetColor);
         },potionLevel,ItemRarity.COMMON);
         return healthPotion;
 
@@ -542,9 +649,9 @@ class LootManager{
         weapon = WeaponNames.get(random.nextInt(0,WeaponNames.size()));
         finalName = modifier.concat(" ").concat(weapon);
         coloredName = switch (rarity){
-            case TRASH -> finalName;
+            case TRASH -> white.concat(finalName).concat(resetColor);
             case COMMON -> red.concat(finalName).concat(resetColor);
-            case UNCOMMON ->blue.concat(finalName).concat(resetColor);
+            case UNCOMMON -> blue.concat(finalName).concat(resetColor);
             case RARE -> green.concat(finalName).concat(resetColor);
             case LEGENDARY -> cyan.concat(finalName).concat(resetColor);
             case UNIQUE -> yellow.concat(finalName).concat(resetColor);
@@ -591,7 +698,7 @@ class LootManager{
     //region armour specific generations
     public int GenerateArmourDefense(double playerLevel,ItemRarity rarity){
         int baseDefenseLevel = (int) playerLevel;
-        int randomModifier = random.nextInt(0,baseDefenseLevel/4);
+        int randomModifier = random.nextInt(0,Math.max(baseDefenseLevel/4,2));
         int preAugmentDefense = baseDefenseLevel + randomModifier;
         int augmentedDefense = (int)switch (rarity){
             case TRASH -> preAugmentDefense * 0.5;
@@ -630,9 +737,9 @@ class LootManager{
         armourType = ArmourNames.get(random.nextInt(0,ArmourNames.size()));
         finalName = modifier.concat(" ").concat(armourType);
         coloredName = switch (rarity){
-            case TRASH -> finalName;
+            case TRASH -> white.concat(finalName).concat(resetColor);
             case COMMON -> red.concat(finalName).concat(resetColor);
-            case UNCOMMON ->blue.concat(finalName).concat(resetColor);
+            case UNCOMMON -> blue.concat(finalName).concat(resetColor);
             case RARE -> green.concat(finalName).concat(resetColor);
             case LEGENDARY -> cyan.concat(finalName).concat(resetColor);
             case UNIQUE -> yellow.concat(finalName).concat(resetColor);
@@ -648,9 +755,15 @@ class WorldManager {
    private final List<String> attributes = Arrays.asList("Oscillating","Romantic","Clumsy","Ferocious","Persnickety","Goopy","Pounding","Dramatic","Bumbling","Slithering");
    private final List<String> Creatures = Arrays.asList("Phoenix","Shark","Bear","Penguin","Kitten","Alien","Unicorn","Eel","Raptor","Dragon");
     //endregion
+    private static final WorldManager PublicWorldManager = new WorldManager();
     private final Random random = new Random();
     WorldManager() {
     }
+
+    public static WorldManager getPublicWorldManager() {
+        return PublicWorldManager;
+    }
+
     public Entity GenerateNewEntity(Player player){
          double playerLevel = player.getPlayerLevel();
          int playerKillCount = player.getEntitiesDefeated();
@@ -745,6 +858,7 @@ class WorldManager {
     //endregion
 }
 class Entity {
+    private final Random rand = new Random();
     private int entityHealth;
     private final int entityBaseDamage;
     private final int entityMaxHealth;
@@ -753,10 +867,10 @@ class Entity {
     private final int entityDefense;
     private final boolean isBoss;
     private final boolean isEscapable;
+    private boolean isAbandoned;
     private boolean isDead;
     private final String entityName;
     private final double entityExperience;
-
     Entity(boolean isBoss, boolean isEscapable, String entityName, double entityExperience, int entityHealth, int entityBaseDamage, int entityCriticalHitChance, double entityCriticalMultiplier, int entityDefense, boolean isDead) {
         this.isBoss = isBoss;
         this.isEscapable = isEscapable;
@@ -769,6 +883,7 @@ class Entity {
         this.entityCriticalMultiplier = entityCriticalMultiplier;
         this.entityDefense = entityDefense;
         this.isDead = isDead;
+        this.isAbandoned = false;
     }
     //region Getter Functions
     public double getEntityCriticalMultiplier() {
@@ -779,6 +894,9 @@ class Entity {
     }
     public boolean isBoss(){
         return isBoss;
+    }
+    public boolean isAbandoned() {
+        return isAbandoned;
     }
     public boolean isEscapable(){
         return isEscapable;
@@ -804,23 +922,18 @@ class Entity {
     public int getEntityMaxHealth(){
         return entityMaxHealth;
     }
-
     //endregion
-
-
-
     //region calculate and checker functions
     public int CalculateDamageOut(){
-        Random rand = new Random();
         //TODO find final way for consistently variable damage output.
         int criticalHitTarget = 100 - entityCriticalHitChance;
         boolean criticalHit = (rand.nextInt(100) >= criticalHitTarget);
         return criticalHit ? (int) (entityBaseDamage * entityCriticalMultiplier) : entityBaseDamage;
     }
-    public void DamageEntity(double rawDamageIn) {
+    public void DamageEntity(int rawDamageIn) {
         int health = getEntityHealth();
         int defense = getEntityDefense();
-        this.entityHealth = (int) (health - (rawDamageIn - defense));
+        this.entityHealth = (health - (rawDamageIn - defense));
         DeathCheck();
     }
     public void DeathCheck(){
@@ -828,6 +941,20 @@ class Entity {
     }
 
 
+    public boolean AttemptToFlee(){
+        if(isBoss){
+            return false;
+        }
+        else {
+            int escapeChance = 100 - (entityHealth/entityMaxHealth * 100);
+            int escapeRoll = rand.nextInt(100)+1;
+            return escapeRoll >= escapeChance;
+
+        }
+    }
+    public void AbandonEntity(){
+        this.isAbandoned = true;
+    }
     //endregion
     //region utilities
     public void PrintAllStats(){
@@ -837,7 +964,11 @@ class Entity {
         System.out.println("Base Damage is: " + entityBaseDamage);
         System.out.println("defense is: " + entityDefense);
         System.out.println("experience is: " + entityExperience);
-
+    }
+    public void PlayerCheck(){
+        System.out.println("Name is: " + entityName);
+        System.out.println("Health: " + entityHealth);
+        System.out.println("Max Health: " + entityMaxHealth);
     }
 
 
@@ -851,7 +982,7 @@ class Item{
         this.rarity = rarity;
     }
     public String getItemName(){
-        return itemName;
+        return itemName.stripLeading();
     }
     public ItemRarity getRarity(){
         return rarity;
@@ -922,6 +1053,15 @@ class Weapon extends Item {
     //endregion
 }
 class Player{
+    //TODO add view inventory and inventory sort options;
+    /**
+     *use this to set the player default values
+     * ensure that player level is not 0 or negative
+     * must start at 0.5 or more
+     */
+    private static HashMap<Item,Integer> playerInv = new HashMap<>();
+    private static  Player  publicPlayer = new Player(50,50,0,0.5,new Weapon("Fists",20,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),playerInv);
+
     //region player attributes
    private int maxHealth;
    private int currentHealth;
@@ -930,7 +1070,7 @@ class Player{
    private Weapon equippedWeapon;
    private Armour equippedArmour;
    private HashMap<Item,Integer> inventory;
-   //endregion
+   //endregion-
     public Player (int maxHealth,int currentHealth,int entitiesDefeated,double playerLevel,Weapon equippedWeapon,Armour equippedArmour,HashMap<Item,Integer> inventory){
         this.maxHealth = maxHealth;
         this.currentHealth = currentHealth;
@@ -942,6 +1082,11 @@ class Player{
 
 
     }
+
+    public static Player getPublicPlayer() {
+        return publicPlayer;
+    }
+
     //region getter functions
     public int getMaxHealth(){
         return maxHealth;
@@ -1010,6 +1155,9 @@ class Player{
         this.entitiesDefeated++;
     }
     public void addToInventory(Item item, int quantity){
+        char firstCharOfItemName = item.getItemName().toLowerCase().charAt(5);
+        boolean presentationModifier = firstCharOfItemName =='a'||firstCharOfItemName =='e'||firstCharOfItemName =='i'||firstCharOfItemName == 'o'|| firstCharOfItemName == 'u';
+       System.out.println((presentationModifier ? "an " : "a ") + item.getItemName() + " was added to your inventory.");
         if (inventory.containsKey(item)){
            int currentAmount = inventory.get(item);
            int newAmount = currentAmount + quantity;
@@ -1074,6 +1222,10 @@ class Player{
             case OMEGA -> 30;
         }
         );
+    }
+    public void AddExp(double amount){
+        playerLevel += amount;
+        //todo add thing that checks level up for healing but that can come later.
     }
     // endregion
     //region player checks
