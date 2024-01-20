@@ -47,7 +47,15 @@ enum PotionLevel {
         return values()[(this.ordinal() + 1) % values().length];
     }
 }
+enum CoinLevels{
+    COPPER,SILVER,GOLD,PLATINUM;
+    public CoinLevels getNext() {
+        return values()[(this.ordinal() + 1) % values().length];
+    }
+}
+//endregion
 class UserInterFace{
+    //region string colors
     protected String red = "\u001B[31m";
     protected String green = "\u001B[32m";
     protected String yellow = "\u001B[33m";
@@ -55,12 +63,15 @@ class UserInterFace{
     protected String magenta = "\u001B[35m";
     protected String cyan = "\u001B[36m";
     protected String resetColor = "\u001B[0m";
+    //endregion
+    //region important instantiations
     protected WorldManager worldManager = new WorldManager();
     protected LootManager lootManager = new LootManager();
     protected Weapon weaponTester = new Weapon("Testing",0,0,1,ItemRarity.UNIQUE);
     protected Armour armourTester = new Armour("Testing",0,0,ItemRarity.UNIQUE);
     protected HashMap<Item,Integer> inventoryTester = new HashMap<>();
     protected Player playerTester = new Player(1,1,0,1,weaponTester,armourTester,inventoryTester);
+    //endregion
     protected int threadInterrupts = 0;
     private final Scanner scanner = new Scanner(System.in);
     //only a single instance is needed to deal with UI;
@@ -368,6 +379,7 @@ class UserInterFace{
             case "3"->{
                 hasChosen = true;
                 chosenOption = BattleOption.FLEE;
+
             }
             case "4"->{
                 hasChosen = true;
@@ -380,6 +392,7 @@ class UserInterFace{
         return chosenOption;
     }
 }
+//region managers
 class FightManager{
     //todo add public version of fight manager.
     UserInterFace userInterFace = UserInterFace.getUserInterFace();
@@ -407,7 +420,7 @@ class FightManager{
 
         }
         else if (entity.isAbandoned()){
-            System.out.println("You escape with your life.");
+            System.out.println(userInterFace.magenta+"You escape with your life"+userInterFace.resetColor);
         }
 
         if (!player.isPlayerDead()) {
@@ -446,9 +459,13 @@ class FightManager{
 
                 }
                 case FLEE -> {
+                    spentAction = true;
                     boolean fleeSuccess = entity.AttemptToFlee();
                     if (fleeSuccess) {
-                        //call flee function
+                        entity.abandon();
+                    }
+                    else {
+                        System.out.println("You fail to flee.");
                     }
 
                     break;
@@ -474,8 +491,8 @@ class LootManager{
     protected final String blue = "\u001B[34m";
     protected final String magenta = "\u001B[35m";
     protected final String cyan = "\u001B[36m";
-    protected final String resetColor = "\u001B[0m";
     protected final String white = "\u001B[37m";
+    protected final String resetColor = "\u001B[0m";
     private final Random random = new Random();
     //region lists of loot modifier names
     private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian","Ionized","Flaming","Destructive","Unstoppable");
@@ -857,6 +874,7 @@ class WorldManager {
 
     //endregion
 }
+//endregion
 class Entity {
     private final Random rand = new Random();
     private int entityHealth;
@@ -922,6 +940,9 @@ class Entity {
     public int getEntityMaxHealth(){
         return entityMaxHealth;
     }
+    public void abandon(){
+        this.isAbandoned = true;
+    }
     //endregion
     //region calculate and checker functions
     public int CalculateDamageOut(){
@@ -946,9 +967,9 @@ class Entity {
             return false;
         }
         else {
-            int escapeChance = 100 - (entityHealth/entityMaxHealth * 100);
+            int escapeChance =  (100 - (int)(entityHealth/(double)entityMaxHealth * 100));
             int escapeRoll = rand.nextInt(100)+1;
-            return escapeRoll >= escapeChance;
+            return escapeRoll <= escapeChance;
 
         }
     }
@@ -974,6 +995,7 @@ class Entity {
 
     //endregion
 }
+//region items
 class Item{
     private final ItemRarity rarity;
     private final String itemName;
@@ -1052,6 +1074,21 @@ class Weapon extends Item {
 
     //endregion
 }
+class Coin extends Item{
+    CoinLevels level;
+
+    public Coin(String itemName, ItemRarity rarity,  CoinLevels level) {
+        super(itemName,rarity = switch (level){
+            case COPPER -> ItemRarity.TRASH;
+            case SILVER -> ItemRarity.COMMON;
+            case GOLD -> ItemRarity.UNCOMMON;
+            case PLATINUM -> ItemRarity.RARE;
+        });
+        this.level = level;
+
+    }
+}
+//endregion
 class Player{
     //TODO add view inventory and inventory sort options;
     /**
@@ -1060,7 +1097,7 @@ class Player{
      * must start at 0.5 or more
      */
     private static HashMap<Item,Integer> playerInv = new HashMap<>();
-    private static  Player  publicPlayer = new Player(50,50,0,0.5,new Weapon("Fists",20,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),playerInv);
+    private static  Player  publicPlayer = new Player(50,50,0,0.5,new Weapon("Fists",10,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),playerInv);
 
     //region player attributes
    private int maxHealth;
@@ -1069,6 +1106,10 @@ class Player{
    private double playerLevel;
    private Weapon equippedWeapon;
    private Armour equippedArmour;
+   private HashMap<Coin,Integer> coinPouch;
+   private ArrayList<Weapon> armory;
+   private ArrayList<Armour> closet;
+
    private HashMap<Item,Integer> inventory;
    //endregion-
     public Player (int maxHealth,int currentHealth,int entitiesDefeated,double playerLevel,Weapon equippedWeapon,Armour equippedArmour,HashMap<Item,Integer> inventory){

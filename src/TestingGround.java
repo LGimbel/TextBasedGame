@@ -5,6 +5,7 @@ public class TestingGround {
 
 
     public static void main(String[] args) {
+
         Random random = new Random();
         boolean wasBoss = false;
     }
