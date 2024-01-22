@@ -397,6 +397,7 @@ class UserInterFace{
 }
 //region managers
 class CoinManager{
+
     private int platinumCoins;
     private int goldCoins;
     private int silverCoins;
