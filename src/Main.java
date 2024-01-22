@@ -10,20 +10,24 @@ public class Main {
           Player player = Player.getPublicPlayer();
           FightManager fightManager = new FightManager();
           WorldManager worldManager = WorldManager.getPublicWorldManager();
-          for(int i = 0; i < 100; i++) {
-              fightManager.MainBattleLoop(player, worldManager.GenerateNewEntity(player));
+          CoinManager coinManager = new CoinManager(0,0,0,1999999);
+          coinManager.printBalance();
 
-          }
+         System.out.println(coinManager.canAfford(12 ,17,190));
+//          for(int i = 0; i < 100; i++) {
+//              fightManager.MainBattleLoop(player, worldManager.GenerateNewEntity(player));
+//
+//          }
 //        userInterFace.PrintGameInstructionsEnemy();
 //        userInterFace.PrintGameInstructionsItemsAndLoot();
 
 
         System.out.println("Hello world!");
 
-       Entity currentEntity = worldManager.GenerateNewEntity(player);
-       currentEntity.PrintAllStats();
-       Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
-       weapon.PintWeaponStats();
+//       Entity currentEntity = worldManager.GenerateNewEntity(player);
+//       currentEntity.PrintAllStats();
+//       Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
+//       weapon.PintWeaponStats();
 //       Armour armour = lootManager.GenerateArmour(player,currentEntity);
 //       armour.PrintArmourStats();
 
@@ -69,8 +73,8 @@ class UserInterFace{
     protected LootManager lootManager = new LootManager();
     protected Weapon weaponTester = new Weapon("Testing",0,0,1,ItemRarity.UNIQUE);
     protected Armour armourTester = new Armour("Testing",0,0,ItemRarity.UNIQUE);
-    protected HashMap<Item,Integer> inventoryTester = new HashMap<>();
-    protected Player playerTester = new Player(1,1,0,1,weaponTester,armourTester,inventoryTester);
+    protected CoinManager coinTester = new CoinManager(0,0,0,0);
+    protected Player playerTester = new Player(1,1,0,1,weaponTester,armourTester,coinTester);
     //endregion
     protected int threadInterrupts = 0;
     private final Scanner scanner = new Scanner(System.in);
@@ -265,11 +269,10 @@ class UserInterFace{
         switch (userChoice){
             case "1"->{
                 lootManager.GenerateWeapon(playerTester,worldManager.GenerateNewEntity(playerTester)).PintWeaponStats();
-                break;
+
             }
             case "2"->{
                 lootManager.GenerateArmour(playerTester,worldManager.GenerateNewEntity(playerTester)).PrintArmourStats();
-                break;
             }
             case "3"->{
                 System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
@@ -393,6 +396,177 @@ class UserInterFace{
     }
 }
 //region managers
+class CoinManager{
+    private int platinumCoins;
+    private int goldCoins;
+    private int silverCoins;
+    private int copperCoins;
+    CoinManager(int platinumCoins, int goldCoins, int silverCoins, int copperCoins){
+        this.platinumCoins = platinumCoins;
+        this.goldCoins = goldCoins;
+        this.silverCoins = silverCoins;
+        this.copperCoins = copperCoins;
+    }
+
+    public void convertToHighestValue(){
+        int convertedSilver;
+        int convertedGold;
+        int convertedPlatinum;
+        if (copperCoins >= 100){
+            convertedSilver = (int) (copperCoins/100.0);
+            copperCoins = copperCoins - (100 * convertedSilver);
+            silverCoins += convertedSilver;
+        }
+        if (silverCoins >= 100){
+            convertedGold = (int) (silverCoins/100.0);
+            silverCoins = silverCoins - (100 * convertedGold);
+            goldCoins += convertedGold;
+        }
+        if(goldCoins >= 100){
+            convertedPlatinum = (int) (goldCoins/100.0);
+            goldCoins = goldCoins - (100 * convertedPlatinum);
+            platinumCoins += convertedPlatinum;
+        }
+    }
+    public void printBalance(){
+        convertToHighestValue();
+        System.out.println(copperCoins + " copper " + silverCoins + " silver " + goldCoins + " gold " + platinumCoins + " platinum ");
+    }
+    private void convertDownOne(CoinLevels type){
+        switch (type){
+            case COPPER -> {
+                if(silverCoins >= 1) {
+                    copperCoins += 100;
+                    silverCoins --;
+                }
+                else if (goldCoins >= 1){
+                    silverCoins += 100;
+                    goldCoins --;
+                    copperCoins += 100;
+                    silverCoins --;
+                } else if (platinumCoins >= 1) {
+                    goldCoins += 100;
+                    platinumCoins --;
+                    silverCoins += 100;
+                    goldCoins --;
+                    copperCoins += 100;
+                    silverCoins --;
+
+                }
+            }
+            case SILVER -> {
+                if (goldCoins >= 1){
+                    silverCoins += 100;
+                    goldCoins --;
+                    copperCoins += 100;
+                    silverCoins --;
+                } else if (platinumCoins >= 1) {
+                    goldCoins += 100;
+                    platinumCoins --;
+                    silverCoins += 100;
+                    goldCoins --;
+                    copperCoins += 100;
+                    silverCoins --;}
+
+            }
+            case GOLD -> {
+                if (platinumCoins >= 1) {
+                    goldCoins += 100;
+                    platinumCoins --;
+                    silverCoins += 100;
+                    goldCoins --;
+                    copperCoins += 100;
+                    silverCoins --;}
+            }
+            case PLATINUM -> {
+            }
+        }
+    }
+//region overloads for canAfford
+    public boolean canAfford(int copperCost, int silverCost,int goldCost) {
+        return canAfford(copperCost, silverCost, goldCost, 0);
+    }
+
+    public boolean canAfford(int copperCost, int silverCost) {
+        return canAfford(copperCost, silverCost, 0, 0);
+    }
+
+    public boolean canAfford(int copperCost) {
+        return canAfford(copperCost, 0, 0, 0);
+    }
+//endregion
+    public boolean canAfford(int copperCost, int silverCost, int goldCost, int platinumCost){
+        convertToHighestValue();
+        if (copperCost <= copperCoins && silverCost <= silverCoins && goldCost <= goldCoins && platinumCost <= platinumCoins){
+            return true;
+        }
+        if (copperCost > copperCoins) {
+            convertDownOne(CoinLevels.COPPER);
+        }
+        if (silverCost > silverCoins){
+            convertDownOne(CoinLevels.SILVER);
+        }
+        if (goldCost > goldCoins){
+            convertDownOne(CoinLevels.GOLD);
+        }
+        if (platinumCost > platinumCoins){
+            return false;
+        }
+        if (copperCost <= copperCoins && silverCost <= silverCoins && goldCost <= goldCoins){
+            return true;
+    }
+        else {
+            convertToHighestValue();
+            return false;
+        }
+
+}
+    public void addCoins(CoinLevels type , int quantity){
+        switch (type){
+            case COPPER -> {
+                copperCoins += quantity;
+            }
+            case SILVER -> {
+                silverCoins += quantity;
+            }
+            case GOLD -> {
+                goldCoins += quantity;
+            }
+            case PLATINUM -> {
+                platinumCoins += quantity;
+            }
+        }
+        convertToHighestValue();
+    }
+    public void removeCoins(CoinLevels type, int quantity){
+        //only do this after checking if the player can afford item!!
+            switch (type) {
+                case COPPER -> {
+
+                    if (copperCoins - quantity <= 0) {
+                        convertDownOne(CoinLevels.COPPER);
+
+                    }
+                    copperCoins =- quantity;
+                }
+                case SILVER -> {
+                    if (silverCoins - quantity <= 0){
+                        convertDownOne(CoinLevels.SILVER);
+                    }
+                    silverCoins =- quantity;
+                }
+                case GOLD -> {
+                    if (silverCoins - quantity <= 0){
+                        convertDownOne(CoinLevels.GOLD);
+                    }
+                    goldCoins =- quantity;
+                }
+                case PLATINUM -> {
+                    platinumCoins =- quantity;
+                }
+            }
+        }
+    }
 class FightManager{
     //todo add public version of fight manager.
     UserInterFace userInterFace = UserInterFace.getUserInterFace();
@@ -1074,20 +1248,7 @@ class Weapon extends Item {
 
     //endregion
 }
-class Coin extends Item{
-    CoinLevels level;
 
-    public Coin(String itemName, ItemRarity rarity,  CoinLevels level) {
-        super(itemName,rarity = switch (level){
-            case COPPER -> ItemRarity.TRASH;
-            case SILVER -> ItemRarity.COMMON;
-            case GOLD -> ItemRarity.UNCOMMON;
-            case PLATINUM -> ItemRarity.RARE;
-        });
-        this.level = level;
-
-    }
-}
 //endregion
 class Player{
     //TODO add view inventory and inventory sort options;
@@ -1097,27 +1258,27 @@ class Player{
      * must start at 0.5 or more
      */
     private static HashMap<Item,Integer> playerInv = new HashMap<>();
-    private static  Player  publicPlayer = new Player(50,50,0,0.5,new Weapon("Fists",10,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),playerInv);
+    public CoinManager coinManager;
+    private static  Player  publicPlayer = new Player(50,50,0,0.5,new Weapon("Fists",10,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),new CoinManager(0,0,0,0));
 
     //region player attributes
-   private int maxHealth;
-   private int currentHealth;
-   private int entitiesDefeated;
-   private double playerLevel;
-   private Weapon equippedWeapon;
-   private Armour equippedArmour;
-   private HashMap<Coin,Integer> coinPouch;
+    private int maxHealth;
+    private int currentHealth;
+    private int entitiesDefeated;
+    private double playerLevel;
+    private Weapon equippedWeapon;
+    private Armour equippedArmour;
    private ArrayList<Weapon> armory;
    private ArrayList<Armour> closet;
 
    private HashMap<Item,Integer> inventory;
    //endregion-
-    public Player (int maxHealth,int currentHealth,int entitiesDefeated,double playerLevel,Weapon equippedWeapon,Armour equippedArmour,HashMap<Item,Integer> inventory){
+    public Player (int maxHealth,int currentHealth,int entitiesDefeated,double playerLevel,Weapon equippedWeapon,Armour equippedArmour, CoinManager coinManager){
         this.maxHealth = maxHealth;
         this.currentHealth = currentHealth;
         this.entitiesDefeated = entitiesDefeated;
         this.playerLevel = playerLevel;
-        this.inventory = inventory;
+        this.coinManager = coinManager;
         this.equippedWeapon = equippedWeapon;
         this.equippedArmour = equippedArmour;
 
