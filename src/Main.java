@@ -1,3 +1,4 @@
+import javax.sql.rowset.spi.SyncProvider;
 import java.util.*;
 import java.util.List;
 
@@ -5,11 +6,22 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         //TODO add game initializer thingymcdo
+
           UserInterFace userInterFace = UserInterFace.getUserInterFace();
+          WorldManager worldManager = new WorldManager();
+          worldManager.printMap();
+          worldManager.moveEast();
+          worldManager.printCurrentRoom();
+          worldManager.moveEast();
+          worldManager.printCurrentRoom();
+          worldManager.moveSouth();
+          worldManager.printCurrentRoom();
+          worldManager.moveSouth();
+          worldManager.printCurrentRoom();
           LootManager lootManager = LootManager.getLootManager();
           Player player = Player.getPublicPlayer();
           FightManager fightManager = new FightManager();
-          WorldManager worldManager = WorldManager.getPublicWorldManager();
+          EntityManager entityManager = EntityManager.getPublicWorldManager();
           CoinManager coinManager = new CoinManager(0,0,0,1999999);
           coinManager.printBalance();
 
@@ -38,6 +50,9 @@ public class Main {
     }
 }
 //region enumerations
+enum Rooms{
+SHOP,ENEMY,TREASURE,SUPERTREASURE,CLEARED
+}
 enum BattleOption{
     FIGHT,CHECK,FLEE,INVENTORY
         }
@@ -69,7 +84,7 @@ class UserInterFace{
     protected String resetColor = "\u001B[0m";
     //endregion
     //region important instantiations
-    protected WorldManager worldManager = new WorldManager();
+    protected EntityManager worldManager = new EntityManager();
     protected LootManager lootManager = new LootManager();
     protected Weapon weaponTester = new Weapon("Testing",0,0,1,ItemRarity.UNIQUE);
     protected Armour armourTester = new Armour("Testing",0,0,ItemRarity.UNIQUE);
@@ -395,6 +410,7 @@ class UserInterFace{
         return chosenOption;
     }
 }
+
 //region managers
 class CoinManager{
 
@@ -524,18 +540,10 @@ class CoinManager{
 }
     public void addCoins(CoinLevels type , int quantity){
         switch (type){
-            case COPPER -> {
-                copperCoins += quantity;
-            }
-            case SILVER -> {
-                silverCoins += quantity;
-            }
-            case GOLD -> {
-                goldCoins += quantity;
-            }
-            case PLATINUM -> {
-                platinumCoins += quantity;
-            }
+            case COPPER -> copperCoins += quantity;
+            case SILVER -> silverCoins += quantity;
+            case GOLD -> goldCoins += quantity;
+            case PLATINUM -> platinumCoins += quantity;
         }
         convertToHighestValue();
     }
@@ -562,9 +570,7 @@ class CoinManager{
                     }
                     goldCoins =- quantity;
                 }
-                case PLATINUM -> {
-                    platinumCoins =- quantity;
-                }
+                case PLATINUM -> platinumCoins =- quantity;
             }
         }
     }
@@ -626,13 +632,8 @@ class FightManager{
                     System.out.println("You hit the " + entity.getEntityName() + " for " + damage + " raw damage!");
                     userInterFace.pause(200);
                     System.out.println(entity.getEntityName() + " took " + (damage - defence) + " damage");
-                    break;
                 }
-                case CHECK -> {
-                    entity.PlayerCheck();
-
-
-                }
+                case CHECK -> entity.PlayerCheck();
                 case FLEE -> {
                     spentAction = true;
                     boolean fleeSuccess = entity.AttemptToFlee();
@@ -642,8 +643,8 @@ class FightManager{
                     else {
                         System.out.println("You fail to flee.");
                     }
-
                     break;
+
                 }
                 case INVENTORY -> {
                     //TODO inventory management hell
@@ -757,7 +758,6 @@ class LootManager{
         PotionLevel potionLevel = PotionLevel.MINI;
         int randomChance = random.nextInt(0,101);
             if(randomChance <= 10){
-                potionLevel = PotionLevel.MINI;
             } else if (randomChance <= 50) {
                 potionLevel = PotionLevel.LESSER;
             }
@@ -775,7 +775,7 @@ class LootManager{
         if (wasBoss && potionLevel != PotionLevel.OMEGA) {
             potionLevel = potionLevel.getNext();
         }
-        HealthPotion healthPotion = new HealthPotion(switch (potionLevel){
+        return new HealthPotion(switch (potionLevel){
             case MINI -> white.concat("Mini Potion of Healing").concat(resetColor);
             case LESSER -> red.concat("Lesser Potion of Healing").concat(resetColor);
             case NORMAL -> blue.concat("Potion of Healing").concat(resetColor);
@@ -783,7 +783,6 @@ class LootManager{
             case GRAND -> cyan.concat("Grand Potion of Healing").concat(resetColor);
             case OMEGA -> yellow.concat("Omega Potion of Healing").concat(resetColor);
         },potionLevel,ItemRarity.COMMON);
-        return healthPotion;
 
         }
     public ItemRarity GenerateItemRarity(boolean wasBoss){
@@ -941,18 +940,18 @@ class LootManager{
     //endregion
 
 }
-class WorldManager {
+class EntityManager {
     //GOD to the world an instance should be made on game initialization.
     //region creatureNaming
    private final List<String> attributes = Arrays.asList("Oscillating","Romantic","Clumsy","Ferocious","Persnickety","Goopy","Pounding","Dramatic","Bumbling","Slithering");
    private final List<String> Creatures = Arrays.asList("Phoenix","Shark","Bear","Penguin","Kitten","Alien","Unicorn","Eel","Raptor","Dragon");
     //endregion
-    private static final WorldManager PublicWorldManager = new WorldManager();
+    private static final EntityManager PublicWorldManager = new EntityManager();
     private final Random random = new Random();
-    WorldManager() {
+    EntityManager() {
     }
 
-    public static WorldManager getPublicWorldManager() {
+    public static EntityManager getPublicWorldManager() {
         return PublicWorldManager;
     }
 
@@ -1048,6 +1047,85 @@ class WorldManager {
 
 
     //endregion
+}
+class WorldManager {
+    Random rand = new Random();
+    private final int rows = 10;
+    private final int columns = 10;
+    private int currentX = 0;
+    private int currentY = 0;
+    private final int enemyChance = 0;
+
+    private final Rooms[][] map = generateMap(rows,columns);
+
+    WorldManager() {
+    }
+
+    private Rooms[][] generateMap(int rows, int columns) {
+        Rooms[][] map = new Rooms[rows][columns];
+        for (int x = 0; x < rows; x++) {
+            for (int y = 0; y < columns; y++) {
+                int roll = rand.nextInt(0, 100) + 1;
+                final int superTreasureChance = 94;
+               final int treasureChance = 84;
+               final int shopChance = 69;
+                if (roll > superTreasureChance) {
+                    map[x][y] = Rooms.SUPERTREASURE;
+                } else if (roll > treasureChance) {
+                    map[x][y] = Rooms.TREASURE;
+                } else if (roll > shopChance) {
+                    map[x][y] = Rooms.SHOP;
+                } else {
+                    map[x][y] = Rooms.ENEMY;
+                }
+            }
+        }
+        return map;
+    }
+    public void printMap(){
+        for (Rooms[] rooms : map) {
+            for (Rooms room : rooms) {
+                System.out.print(room + " ");
+            }
+            System.out.println("\n");
+
+        }
+    }
+    public void moveNorth(){
+        if(currentY != 0){
+            currentY --;
+        }
+        else {
+            System.out.println("You can't move any more north");
+        }
+    }
+    public void moveEast(){
+        if  (currentX != map[currentY].length){
+            currentX ++;
+        }
+        else {
+            System.out.println("You can't move any more east");
+        }
+    }
+    public void moveSouth(){
+        if (currentY != map.length){
+            currentY ++;
+        }
+        else {
+            System.out.println("You can't move any more south");
+        }
+    }
+    public void moveWest(){
+        if (currentY != 0){
+            currentX --;
+        }
+        else {
+            System.out.println("You can't move any more west");
+        }
+    }
+    public void printCurrentRoom(){
+        System.out.println(map[currentY][currentX]);
+    }
 }
 //endregion
 class Entity {
@@ -1248,8 +1326,8 @@ class Weapon extends Item {
     }
 
     //endregion
-}
 
+}
 //endregion
 class Player{
     //TODO add view inventory and inventory sort options;
