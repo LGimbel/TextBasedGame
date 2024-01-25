@@ -1,14 +1,98 @@
 import java.util.*;
-public class TestingGround {
 
+public class TestingGround {
 
 
 
     public static void main(String[] args) {
 
-        Random random = new Random();
-        boolean wasBoss = false;
+        int iterations = 1000;
+        int maxInput = 40;
+        double scaleIncrement = 0.5;
+
+        for (double input = 0; input <= maxInput; input += scaleIncrement) {
+            double[] results = testFunction(input, iterations);
+            double average = calculateAverage(results);
+            double min = findMin(results);
+            double max = findMax(results);
+
+            System.out.println("Input: " + input +
+                    ", Average: " + average +
+                    ", Min: " + min +
+                    ", Max: " + max);
+        }
     }
+
+    private static double[] testFunction(double input, int iterations) {
+        double[] results = new double[iterations];
+        Arrays.fill(results, functionToTest(input));
+        return results;
+    }
+
+    private static double calculateAverage(double[] array) {
+        return Arrays.stream(array).average().orElse(0);
+    }
+
+    private static double findMin(double[] array) {
+        return Arrays.stream(array).min().orElse(0);
+    }
+
+    private static double findMax(double[] array) {
+        return Arrays.stream(array).max().orElse(0);
+    }
+
+    // Replace this with the actual function you want to test
+    private static double functionToTest(double input) {
+        return generateOutput(input);
+    }
+    public static int generateOutput(double input) {
+        double mean = calculateMean(input);
+        double standardDeviation = mean * 1.5;
+
+        Random random = new Random();
+
+        // Generate a random value with the specified mean and standard deviation
+        double randomValue = random.nextGaussian() * standardDeviation + mean;
+
+        // Ensure the generated value is positive and substantial
+        int output = Math.max(1, (int) Math.round(randomValue));
+
+        return output;
+    }
+
+    public static double calculateMean(double input) {
+        // Define the desired mean values for specific inputs
+        double[] inputValues = {0.5, 1, 3, 10, 23, 30};
+        int[] meanValues = {199, 250, 1320, 197290, 9744023, 100000000};
+
+        // Find the nearest input values
+        double lowerInput = 0.5;
+        double upperInput = 1;
+
+        for (double value : inputValues) {
+            if (input >= lowerInput && input <= upperInput) {
+                int lowerMean = meanValues[(int) lowerInput];
+                int upperMean = meanValues[(int) upperInput];
+
+                // Interpolate the mean value based on the input
+                return lowerMean + (upperMean - lowerMean) * (input - lowerInput) / (upperInput - lowerInput);
+            }
+
+            lowerInput = value;
+            upperInput = value;
+        }
+
+        return 0; // Default case
+    }
+
+
+
+
+
+
+        }
+
+
 
 //            int totalTrash = 0;
 //            int totalCommon = 0;
@@ -45,7 +129,7 @@ public class TestingGround {
 //            int average = total/100000;
 //            System.out.println("Average: "+ average +" maximum: "+ max + " Minimum: " + min + " at level: " + playerLevel);
 //            System.out.println(max);
-        }
+
 
 
 

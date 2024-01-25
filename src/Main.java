@@ -1,4 +1,3 @@
-import javax.sql.rowset.spi.SyncProvider;
 import java.util.*;
 import java.util.List;
 
@@ -8,7 +7,7 @@ public class Main {
         //TODO add game initializer thingymcdo
 
           UserInterFace userInterFace = UserInterFace.getUserInterFace();
-          WorldManager worldManager = new WorldManager();
+          WorldManager worldManager = new WorldManager(10,10);
           worldManager.printMap();
           worldManager.moveEast();
           worldManager.printCurrentRoom();
@@ -21,22 +20,22 @@ public class Main {
           LootManager lootManager = LootManager.getLootManager();
           Player player = Player.getPublicPlayer();
           FightManager fightManager = new FightManager();
-          EntityManager entityManager = EntityManager.getPublicWorldManager();
+          EntityManager entityManager = EntityManager.getPublicEntityManager();
           CoinManager coinManager = new CoinManager(0,0,0,1999999);
           coinManager.printBalance();
 
          System.out.println(coinManager.canAfford(12 ,17,190));
 //          for(int i = 0; i < 100; i++) {
-//              fightManager.MainBattleLoop(player, worldManager.GenerateNewEntity(player));
+//              fightManager.MainBattleLoop(player, entityManager.generateNewEntity(player));
 //
 //          }
-//        userInterFace.PrintGameInstructionsEnemy();
-//        userInterFace.PrintGameInstructionsItemsAndLoot();
+//        userInterFace.printGameInstructionsEnemy();
+//        userInterFace.printGameInstructionsItemsAndLoot();
 
 
         System.out.println("Hello world!");
 
-//       Entity currentEntity = worldManager.GenerateNewEntity(player);
+//       Entity currentEntity = entityManager.generateNewEntity(player);
 //       currentEntity.PrintAllStats();
 //       Weapon weapon = lootManager.GenerateWeapon(player,currentEntity);
 //       weapon.PintWeaponStats();
@@ -74,6 +73,8 @@ enum CoinLevels{
 }
 //endregion
 class UserInterFace{
+    UserInterFace(){
+    }
     //region string colors
     protected String red = "\u001B[31m";
     protected String green = "\u001B[32m";
@@ -84,7 +85,8 @@ class UserInterFace{
     protected String resetColor = "\u001B[0m";
     //endregion
     //region important instantiations
-    protected EntityManager worldManager = new EntityManager();
+    protected WorldManager worldManager = WorldManager.getPublicWorldManager();
+    protected EntityManager entityManager = new EntityManager();
     protected LootManager lootManager = new LootManager();
     protected Weapon weaponTester = new Weapon("Testing",0,0,1,ItemRarity.UNIQUE);
     protected Armour armourTester = new Armour("Testing",0,0,ItemRarity.UNIQUE);
@@ -94,11 +96,40 @@ class UserInterFace{
     protected int threadInterrupts = 0;
     private final Scanner scanner = new Scanner(System.in);
     //only a single instance is needed to deal with UI;
-    private static UserInterFace PublicUserInterFace = new UserInterFace();
-   UserInterFace(){
-    }
+    private static final UserInterFace PublicUserInterFace = new UserInterFace();
     static UserInterFace getUserInterFace(){
         return PublicUserInterFace;
+    }
+    public void playerMovementInterface(){
+        System.out.println("\n\nChose a direction to move.");
+       String chosenDirection =  scanner.nextLine().toLowerCase();
+        switch (chosenDirection){
+            case "up","north","n"->{
+                worldManager.moveNorth();
+                break;
+            }
+            case "right","east","e" ->{
+                 worldManager.moveEast();
+            }
+            case "down","south","s"->{
+                worldManager.moveSouth();
+            }
+            case "left","west","w" ->{
+                worldManager.moveWest();
+            }
+            case "help"->{
+                System.out.println("To move north type \"up\",\"north\" or \"n\"");
+                System.out.println("To move east type \"right\",\"east\" or \"e\"");
+                System.out.println("To move south type \"down\",\"south\" or \"s\"");
+                System.out.println("To move west type \"left\",\"west\" or \"w\"");
+                playerMovementInterface();
+            }
+            default -> {
+                System.out.println(chosenDirection.concat(" was not an option please try again."));
+                System.out.println("If you would like help with movement commands type \"help\".");
+                playerMovementInterface();
+            }
+        }
     }
     public void pause(int milliseconds){
         try {
@@ -108,22 +139,15 @@ class UserInterFace{
         }
 
     }
-    public void pause(){
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            this.threadInterrupts++;
-        }
-
-    }
-    public void PrintWelcomingMessage(){
+    public void printWelcomingMessage(){
         // welcome user to the game and let them read the rules if desired.
         final String AsteriskFrame = "\t\t***************************************************\t\t";
         boolean userUnderstands = false;
         //region print instructions to user
         System.out.println(AsteriskFrame);
         System.out.println("Welcome to the Game!");
-        System.out.println("This game is by typing text into the output terminal.\nWhich conveniently happens to be the area you are reading this text from");
+        System.out.println("Made by Liam Jasper Gimbel");
+        System.out.println("This game is played by typing text into the output terminal.\nWhich conveniently happens to be the area you are reading this text from");
         System.out.println("Sometimes the terminal will prompt you with yes or no questions these will usually be designated with a Y/N");
         System.out.println("To answer these question please use Y or y for yes and N or n for no");
         System.out.println("Other times the terminal will prompt you to enter a number based off of what it prints to the screen.");
@@ -144,17 +168,17 @@ class UserInterFace{
                 case "Y", "y" -> {
                     userUnderstands = true;
                     System.out.println("Great!\nWith that have fun.");
-                    MainMenuMenuOutMostSelectionLogic(false);
+                    mainMenuMenuOutMostSelectionLogic(false);
                 }
                 case "N", "n" -> {
                     System.out.println("Oh no feel free to reread the text.");
-                    PrintWelcomingMessage();
+                    printWelcomingMessage();
                 }
                 default -> System.out.println("Please try again as " + userInput + " is not a valid option.");
             }
         }while (!(userUnderstands));
     }
-    public void MainMenuMenuOutMostSelectionLogic(boolean readInstructions){
+    public void mainMenuMenuOutMostSelectionLogic(boolean readInstructions){
         boolean hasChosen = false;
         final String MainMenu = readInstructions ? "1:Start Game\n2:View Full Game Instructions\n3:View Graphics Options\n4:Exit Game":"1:Start Game\n2:View Full Game Instructions(Recommended!!)\n3:View Graphics Options\n4:Exit Game";
         do {
@@ -169,7 +193,7 @@ class UserInterFace{
                 }
                 case "2" ->{
                     hasChosen = true;
-                    PrintGameInstructionsEnemy();
+                    printGameInstructionsEnemy();
                 }
                 case "3" ->{
                     System.out.print("Loading");
@@ -203,7 +227,7 @@ class UserInterFace{
             }
         }while(!hasChosen);
     }
-    public void PrintGameInstructionsEnemy(){
+    public void printGameInstructionsEnemy(){
         //accessed through the MainMenuOuterLoop;
         //region print statements
         System.out.println(green + "Welcome to the Enemy section of the Game Instructions." + resetColor);
@@ -235,9 +259,9 @@ class UserInterFace{
         System.out.println("Also note that player level while has no upper bound, setting it to values over 100.0 will make the stats go to extreme levels.Feel free to try though as it wont break.");
         System.out.println("Finally note that the player level displayed in game may not  be directly the same as the player level input.");
         //endregion
-        PlayerEntityGenerator();
+        playerEntityGenerator();
     }
-    public void PrintGameInstructionsItemsAndLoot(){
+    public void printGameInstructionsItemsAndLoot(){
         System.out.println(green+"Welcome to the Items & Loot Section of the instructions"+ resetColor);
         pause(400);
         System.out.println("In the current state of the game there are three different types of loot");
@@ -268,11 +292,11 @@ class UserInterFace{
         System.out.println("Items will be dropped and added directly to your inventory upon successfully killing and enemy.");
         System.out.println("That is all to items feel free to use the item generator to generate some items,however unlike enemies which only use two player stats item generation is much more complex\nSo don't expect results to be identical to actual gameplay");
         System.out.println("Also you're almost done with the directions only one page to go!!");
-        PlayerWeaponAndArmourGenerator();
+        playerWeaponAndArmourGenerator();
 
 
     }
-    public void PlayerWeaponAndArmourGenerator(){
+    public void playerWeaponAndArmourGenerator(){
         double playerLevel = playerTester.getPlayerLevel();
         final String LootGenerationMenu = ("1:Generate new Weapon at player level: " + playerLevel +"\n" +"2:Generate a new Armour piece at player level: " + playerLevel + "3:Change player level\n4:Return to Enemy section of Instructions\n" + "5:Return to Items & Loot section of Instructions\n6:Proceed to Player Stats and Gameplay steps\n7:Return to Main Menu");
         String userChoice;
@@ -283,11 +307,11 @@ class UserInterFace{
 
         switch (userChoice){
             case "1"->{
-                lootManager.GenerateWeapon(playerTester,worldManager.GenerateNewEntity(playerTester)).PintWeaponStats();
+                lootManager.GenerateWeapon(playerTester, entityManager.generateNewEntity(playerTester)).PintWeaponStats();
 
             }
             case "2"->{
-                lootManager.GenerateArmour(playerTester,worldManager.GenerateNewEntity(playerTester)).PrintArmourStats();
+                lootManager.GenerateArmour(playerTester, entityManager.generateNewEntity(playerTester)).PrintArmourStats();
             }
             case "3"->{
                 System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
@@ -306,12 +330,12 @@ class UserInterFace{
             }
             case "4"->{
                 again = false;
-                PrintGameInstructionsEnemy();
+                printGameInstructionsEnemy();
                 break;
             }
             case "5" ->{
                 again = false;
-                PrintGameInstructionsItemsAndLoot();
+                printGameInstructionsItemsAndLoot();
                 break;
             }
             case "6"->{
@@ -319,13 +343,13 @@ class UserInterFace{
             }
             case "7" ->{
                 again = false;
-                MainMenuMenuOutMostSelectionLogic(true);
+                mainMenuMenuOutMostSelectionLogic(true);
 
             }
         }
-       if (again) PlayerWeaponAndArmourGenerator();
+       if (again) playerWeaponAndArmourGenerator();
     }
-    public void PlayerEntityGenerator(){
+    public void playerEntityGenerator(){
         double playerLevel = playerTester.getPlayerLevel();
         String userChoice;
         boolean again = true;
@@ -334,7 +358,7 @@ class UserInterFace{
         userChoice = scanner.nextLine();
         switch (userChoice){
             case "1"->{
-                worldManager.GenerateNewEntity(playerTester).PrintAllStats();
+                entityManager.generateNewEntity(playerTester).PrintAllStats();
                 break;
             }
             case "2"->{
@@ -354,12 +378,12 @@ class UserInterFace{
             }
             case "3"->{
                 again = false;
-                PrintGameInstructionsEnemy();
+                printGameInstructionsEnemy();
                 break;
             }
             case "4"->{
                 again = false;
-                PrintGameInstructionsItemsAndLoot();
+                printGameInstructionsItemsAndLoot();
                 break;
             }
             case "5"->{
@@ -367,7 +391,7 @@ class UserInterFace{
             }
             case "6"->{
                 again = false;
-                MainMenuMenuOutMostSelectionLogic(true);
+                mainMenuMenuOutMostSelectionLogic(true);
                 break;
             }
             default -> {
@@ -375,7 +399,7 @@ class UserInterFace{
                 break;
             }
         }
-        if(again)PlayerEntityGenerator();
+        if(again) playerEntityGenerator();
     }
     public BattleOption PlayerFightUi(){
         boolean hasChosen = false;
@@ -576,11 +600,16 @@ class CoinManager{
     }
 class FightManager{
     //todo add public version of fight manager.
-    UserInterFace userInterFace = UserInterFace.getUserInterFace();
-    LootManager lootManager = LootManager.getLootManager();
+  protected static FightManager publicFightManager = new FightManager();
+   private final  UserInterFace userInterFace = UserInterFace.getUserInterFace();
+   protected final LootManager lootManager = LootManager.getLootManager();
         //will contain all functions to deal with battles
         // only one instance needed.
     FightManager(){
+
+    }
+    public static FightManager getPublicFightManager(){
+        return publicFightManager;
 
     }
     public void MainBattleLoop(Player player,Entity entity){
@@ -654,7 +683,6 @@ class FightManager{
     }
 
     }
-
 class LootManager{
     /*
     the loot manager is used for dynamically generating loot as well as determining what loot if any is dropped.
@@ -741,6 +769,20 @@ class LootManager{
         return new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
         //endregion
     }
+    public Weapon GenerateWeapon(double level,Entity entity){
+        // region entity stats retrieved.
+        final boolean wasBoss = entity.isBoss();
+        //endregion
+        //region weapon stats to be dynamically generated
+        //further documentation for the stats generated here can be found in the lootTable.txt file
+        ItemRarity rarity = GenerateItemRarity(wasBoss);
+        String weaponName = GenerateWeaponName(rarity);
+        int baseDamage = GenerateWeaponBaseDamage(rarity,level);
+        int criticalHitChance = GenerateWeaponCriticalChance(rarity);
+        double criticalHitDamageMultiplier = GenerateWeaponCriticalDamageMultiplier(rarity);
+        return new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
+        //endregion
+    }
     public Armour GenerateArmour(Player player,Entity entity){
         double playerLevel = player.getPlayerLevel();
         boolean wasBoss = entity.isBoss();
@@ -752,6 +794,16 @@ class LootManager{
         //endregion
         return new Armour(itemName,defense,dodgeChance,rarity);
 
+    }
+    public Armour GenerateArmour(double level,Entity entity){
+        boolean wasBoss = entity.isBoss();
+        //region armour stats to be generated
+        ItemRarity rarity = GenerateItemRarity(wasBoss);
+        String itemName = GenerateArmourName(rarity);
+        int defense = GenerateArmourDefense(level,rarity);
+        int dodgeChance = GenerateArmourDodgeChance(rarity);
+        //endregion
+        return new Armour(itemName,defense,dodgeChance,rarity);
     }
     public HealthPotion GenerateHealthPotion(Entity entity){
         boolean wasBoss = entity.isBoss();
@@ -946,16 +998,16 @@ class EntityManager {
    private final List<String> attributes = Arrays.asList("Oscillating","Romantic","Clumsy","Ferocious","Persnickety","Goopy","Pounding","Dramatic","Bumbling","Slithering");
    private final List<String> Creatures = Arrays.asList("Phoenix","Shark","Bear","Penguin","Kitten","Alien","Unicorn","Eel","Raptor","Dragon");
     //endregion
-    private static final EntityManager PublicWorldManager = new EntityManager();
+    private static final EntityManager PublicEntityManager = new EntityManager();
     private final Random random = new Random();
     EntityManager() {
     }
 
-    public static EntityManager getPublicWorldManager() {
-        return PublicWorldManager;
+    public static EntityManager getPublicEntityManager() {
+        return PublicEntityManager;
     }
 
-    public Entity GenerateNewEntity(Player player){
+    public Entity generateNewEntity(Player player){
          double playerLevel = player.getPlayerLevel();
          int playerKillCount = player.getEntitiesDefeated();
          //region entity specs to be generated
@@ -976,6 +1028,12 @@ class EntityManager {
         return new Entity(isBoss,isEscapable,trueName,entityExperience,entityHealth,entityBaseDamage,entityCriticalHitChance,entityCriticalMultiplier,entityDefense,isDead);
          //endregion
 
+    }
+    public Entity generateNewEntityForShop(double level){
+        //used only for generation of items in the shop.
+        int entityHealth = GenerateEntityHealth(level);
+        String entityName = "ShopEntity";
+        return new Entity(true, false, "ShopEntity", 0.0,entityHealth, 0, 0, 0.0, 0, true);
     }
     //region entity generation algorithms
     public int GenerateEntityHealth(double playerLevel){
@@ -1050,18 +1108,21 @@ class EntityManager {
 }
 class WorldManager {
     Random rand = new Random();
-    private final int rows = 10;
-    private final int columns = 10;
+    protected static WorldManager publicworldManager = new WorldManager(10,10);
+    private final EntityManager entityManager = EntityManager.getPublicEntityManager();
+    Player player = Player.getPublicPlayer();
+    WorldManager(int rows, int columns) {
+        this.map = generateMap(rows,columns);
+    }
     private int currentX = 0;
     private int currentY = 0;
-    private final int enemyChance = 0;
-
-    private final Rooms[][] map = generateMap(rows,columns);
-
-    WorldManager() {
+    private Rooms[][] map;
+    public static WorldManager getPublicWorldManager(){
+      return publicworldManager;
     }
 
     private Rooms[][] generateMap(int rows, int columns) {
+        //dynamically generate map based on
         Rooms[][] map = new Rooms[rows][columns];
         for (int x = 0; x < rows; x++) {
             for (int y = 0; y < columns; y++) {
@@ -1091,6 +1152,7 @@ class WorldManager {
 
         }
     }
+    //region movement functions
     public void moveNorth(){
         if(currentY != 0){
             currentY --;
@@ -1123,11 +1185,172 @@ class WorldManager {
             System.out.println("You can't move any more west");
         }
     }
+    //endregion
     public void printCurrentRoom(){
         System.out.println(map[currentY][currentX]);
     }
+    public Rooms determineEncounterType(){
+        return map[currentX][currentY];
+    }
+    public void startEncounter(){
+        Rooms roomType = determineEncounterType();
+        switch (roomType){
+            case SHOP -> {
+            }
+            case ENEMY -> {
+            }
+            case TREASURE -> {
+            }
+            case SUPERTREASURE -> {
+            }
+            case CLEARED -> {
+
+            }
+        }
+    }
+    public void resolveEnemyEncounter(){
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 //endregion
+class Shop{
+    Random random = new Random();
+    private final LootManager lootManager = LootManager.getLootManager();
+    private final EntityManager entityManager = EntityManager.getPublicEntityManager();
+    private final CoinManager coinConverter;
+
+    private Armour armour;
+    private ItemCost armourItemCost;
+    private Weapon weapon;
+    private ItemCost weaponItemCost;
+    private HealthPotion healthPotion;
+    private ItemCost healthPotionCost;
+    private final double playerLevel;//ensure this is only set once on instantiation otherwise it would break everything.
+    private final double shopLevel;
+    private final Location location;
+
+    Shop(Player player){
+        this.playerLevel = player.getPlayerLevel();
+        this.location = player.getLocation();
+        this.shopLevel = playerLevel + 1.7;
+        this.coinConverter = new CoinManager(0,0,0,0);
+        this.healthPotion = generateHealthPotionForSale();
+        this.armour = generateArmourForSale();
+        this.weapon = generateWeaponForSale();
+        this.healthPotionCost = generateItemCost(healthPotion);
+    }
+    private Armour generateArmourForSale(){
+       return lootManager.GenerateArmour(shopLevel, entityManager.generateNewEntityForShop(shopLevel));
+    }
+    private Weapon generateWeaponForSale(){
+        return lootManager.GenerateWeapon(shopLevel,entityManager.generateNewEntityForShop(shopLevel));
+    }
+    private HealthPotion generateHealthPotionForSale(){
+        return lootManager.GenerateHealthPotion(entityManager.generateNewEntityForShop(shopLevel));
+    }
+    private ItemCost generateItemCost(HealthPotion healthPotion){
+        return switch (healthPotion.getHealingLevel()){
+            case MINI -> null;
+            case LESSER -> new ItemCost(0,0,1,0);
+            case NORMAL -> new ItemCost(0,0,10,0);
+            case GREATER -> new ItemCost(0,1,0,0);
+            case GRAND -> new ItemCost(0,3,0,0);
+            case OMEGA -> new ItemCost(0,8,0,0);
+        };
+    }
+    private ItemCost generateItemCost(Weapon weapon){
+        double costModifier = switch (weapon.getRarity()){
+            case TRASH -> 0.1;
+            case COMMON -> 1;
+            case UNCOMMON -> 1.1;
+            case RARE -> 1.3;
+            case LEGENDARY -> 1.5;
+            case UNIQUE -> 1.6;
+        };
+        int copperCost = 12 + (int) playerLevel * random.nextInt(10,35);
+        return new ItemCost(1,1,1,1);
+    }
+
+
+
+}
+class Location{
+    private int xCoordinate;
+    private int yCoordinate;
+    Location(int xCoordinate, int yCoordinate){
+        this.xCoordinate = xCoordinate;
+        this.yCoordinate = yCoordinate;
+    }
+
+    public int getXCoordinate() {
+        return xCoordinate;
+    }
+    public int getYCoordinate() {
+        return yCoordinate;
+    }
+    public void setYCoordinate(int yCoordinate) {
+        this.yCoordinate = yCoordinate;
+    }
+    public void setXCoordinate(int xCoordinate) {
+        this.xCoordinate = xCoordinate;
+    }
+    public void incrementXCoordinate() {
+        this.xCoordinate++;
+    }
+    public void decrementXCoordinate() {
+        this.xCoordinate--;
+    }
+    public void incrementYCoordinate() {
+        this.yCoordinate++;
+    }
+    public void decrementYCoordinate() {
+        this.yCoordinate++;
+    }
+
+
+}
+class ItemCost{
+    private final int platinumCost;
+    private final int goldCost;
+    private final int silverCost;
+    private final int copperCost;
+    ItemCost(int platinumCost,int goldCost, int silverCost, int copperCost){
+        this.platinumCost = platinumCost;
+        this.goldCost = goldCost;
+        this.silverCost = silverCost;
+        this.copperCost = copperCost;
+    }
+    public int getCopperCost() {
+        return copperCost;
+    }
+
+    public int getSilverCost() {
+        return silverCost;
+    }
+
+    public int getGoldCost() {
+        return goldCost;
+    }
+
+    public int getPlatinumCost() {
+        return platinumCost;
+    }
+}
 class Entity {
     private final Random rand = new Random();
     private int entityHealth;
@@ -1347,6 +1570,7 @@ class Player{
     private double playerLevel;
     private Weapon equippedWeapon;
     private Armour equippedArmour;
+    private Location location;
    private ArrayList<Weapon> armory;
    private ArrayList<Armour> closet;
 
@@ -1360,6 +1584,7 @@ class Player{
         this.coinManager = coinManager;
         this.equippedWeapon = equippedWeapon;
         this.equippedArmour = equippedArmour;
+        this.location = new Location(0,0);
 
 
     }
@@ -1369,6 +1594,10 @@ class Player{
     }
 
     //region getter functions
+
+    public Location getLocation() {
+        return location;
+    }
     public int getMaxHealth(){
         return maxHealth;
     }
