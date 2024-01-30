@@ -1232,7 +1232,7 @@ class WorldManager {
     }
     public void moveSouth(){
         Location location = player.getLocation();
-        if (location.getYCoordinate() != map.length){
+        if (location.getYCoordinate() != map.length -1){
             location.incrementYCoordinate();
             startEncounter();
         }
@@ -1297,6 +1297,7 @@ class WorldManager {
         player.addToInventory(LootManager.getLootManager().GenerateWeapon(player.getPlayerLevel() ,EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel())));
         player.addToInventory(LootManager.getLootManager().GenerateArmour((Player.getPublicPlayer().getPlayerLevel()),EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel())));
         player.coinManager.addCoins(CoinLevels.GOLD,rand.nextInt(1,8));
+        map[player.getLocation().getXCoordinate()][player.getLocation().getYCoordinate()] = Rooms.CLEARED;
     }
     public void resolveShopEncounter(){
         //first see if the player has been to the shop before;
