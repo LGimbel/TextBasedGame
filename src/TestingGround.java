@@ -5,6 +5,7 @@ public class TestingGround {
 
 
     public static void main(String[] args) {
+        Random random = new Random();
 
         int iterations = 1000;
         int maxInput = 40;
@@ -41,48 +42,21 @@ public class TestingGround {
         return Arrays.stream(array).max().orElse(0);
     }
 
-    // Replace this with the actual function you want to test
+    //replace this with the func to test
     private static double functionToTest(double input) {
-        return generateOutput(input);
+        return generate(input);
     }
-    public static int generateOutput(double input) {
-        double mean = calculateMean(input);
-        double standardDeviation = mean * 1.5;
-
+    public static double generate(double input) {
         Random random = new Random();
-
-        // Generate a random value with the specified mean and standard deviation
-        double randomValue = random.nextGaussian() * standardDeviation + mean;
-
-        // Ensure the generated value is positive and substantial
-        int output = Math.max(1, (int) Math.round(randomValue));
-
-        return output;
+        double baseValue = calculateBaseValue(input);
+        double adjustedValue = (baseValue + random.nextGaussian() * (baseValue * 0.1)); // 10% variance
+        return Math.max(adjustedValue, 2); // Ensure value is never 0 or 1
     }
 
-    public static double calculateMean(double input) {
-        // Define the desired mean values for specific inputs
-        double[] inputValues = {0.5, 1, 3, 10, 23, 30};
-        int[] meanValues = {199, 250, 1320, 197290, 9744023, 100000000};
-
-        // Find the nearest input values
-        double lowerInput = 0.5;
-        double upperInput = 1;
-
-        for (double value : inputValues) {
-            if (input >= lowerInput && input <= upperInput) {
-                int lowerMean = meanValues[(int) lowerInput];
-                int upperMean = meanValues[(int) upperInput];
-
-                // Interpolate the mean value based on the input
-                return lowerMean + (upperMean - lowerMean) * (input - lowerInput) / (upperInput - lowerInput);
-            }
-
-            lowerInput = value;
-            upperInput = value;
-        }
-
-        return 0; // Default case
+    private static double calculateBaseValue(double input) {
+        // This function needs to be adjusted to fit the specific requirements
+        // and data points provided. This is a placeholder function.
+        return Math.pow(input, 3) * 10 + Math.exp(input) * 20;
     }
 
 
