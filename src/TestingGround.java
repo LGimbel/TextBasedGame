@@ -3,68 +3,75 @@ import java.util.*;
 public class TestingGround {
 
 
-
     public static void main(String[] args) {
         Random random = new Random();
+        Location location = new Location(7,10);
+        Location location1 = new Location(7,10);
+        System.out.println(location1);
+        System.out.println(location);
+
 
         int iterations = 1000;
         int maxInput = 40;
         double scaleIncrement = 0.5;
+//        System.out.println("**********************************************************************************************************************************************************************************************************************************************************");
 
-        for (double input = 0; input <= maxInput; input += scaleIncrement) {
-            double[] results = testFunction(input, iterations);
-            double average = calculateAverage(results);
-            double min = findMin(results);
-            double max = findMax(results);
-
-            System.out.println("Input: " + input +
-                    ", Average: " + average +
-                    ", Min: " + min +
-                    ", Max: " + max);
-        }
+//        for (double input = 0; input <= maxInput; input += scaleIncrement) {
+//            double[] results = testFunction(input, iterations);
+//            double average = calculateAverage(results);
+//            double min = findMin(results);
+//            double max = findMax(results);
+//
+//            System.out.println("Input: " + input +
+//                    ", Average: " + average +
+//                    ", Min: " + min +
+//                    ", Max: " + max);
+//        }
+//    }
+//
+//    private static double[] testFunction(double input, int iterations) {
+//        double[] results = new double[iterations];
+//        Arrays.fill(results, functionToTest(input));
+//        return results;
+//    }
+//
+//    private static double calculateAverage(double[] array) {
+//        return Arrays.stream(array).average().orElse(0);
+//    }
+//
+//    private static double findMin(double[] array) {
+//        return Arrays.stream(array).min().orElse(0);
+//    }
+//
+//    private static double findMax(double[] array) {
+//        return Arrays.stream(array).max().orElse(0);
+//    }
+//
+//    //replace this with the func to test
+//    private static double functionToTest(double input) {
+//        return generate(input);
+//    }
+//    public static double generate(double input) {
+//        Random random = new Random();
+//        double baseValue = calculateBaseValue(input);
+//        double adjustedValue = (baseValue + random.nextGaussian() * (baseValue * 0.1)); // 10% variance
+//        return Math.max(adjustedValue, 2); // Ensure value is never 0 or 1
+//    }
+//
+//    private static double calculateBaseValue(double input) {
+//        // This function needs to be adjusted to fit the specific requirements
+//        // and data points provided. This is a placeholder function.
+//        return Math.pow(input, 3) * 10 + Math.exp(input) * 20;
+//    }
+//
+//
+//
+//
+//
+//
+//        }
     }
-
-    private static double[] testFunction(double input, int iterations) {
-        double[] results = new double[iterations];
-        Arrays.fill(results, functionToTest(input));
-        return results;
-    }
-
-    private static double calculateAverage(double[] array) {
-        return Arrays.stream(array).average().orElse(0);
-    }
-
-    private static double findMin(double[] array) {
-        return Arrays.stream(array).min().orElse(0);
-    }
-
-    private static double findMax(double[] array) {
-        return Arrays.stream(array).max().orElse(0);
-    }
-
-    //replace this with the func to test
-    private static double functionToTest(double input) {
-        return generate(input);
-    }
-    public static double generate(double input) {
-        Random random = new Random();
-        double baseValue = calculateBaseValue(input);
-        double adjustedValue = (baseValue + random.nextGaussian() * (baseValue * 0.1)); // 10% variance
-        return Math.max(adjustedValue, 2); // Ensure value is never 0 or 1
-    }
-
-    private static double calculateBaseValue(double input) {
-        // This function needs to be adjusted to fit the specific requirements
-        // and data points provided. This is a placeholder function.
-        return Math.pow(input, 3) * 10 + Math.exp(input) * 20;
-    }
-
-
-
-
-
-
-        }
+}
 
 
 

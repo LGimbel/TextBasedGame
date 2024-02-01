@@ -1,28 +1,33 @@
-import javax.lang.model.util.AbstractElementVisitor9;
 import java.util.*;
 import java.util.List;
 
 
 public class Main {
     public static void main(String[] args) {
-
-          UserInterFace userInterFace = UserInterFace.getUserInterFace();
-          WorldManager worldManager = new WorldManager(10,10);
+          UserInterface userInterFace = UserInterface.getUserInterface();
+          WorldManager worldManager = WorldManager.getPublicWorldManager();
           LootManager lootManager = LootManager.getLootManager();
         Player player = Player.getPublicPlayer();
-        player.coinManager.addCoins(CoinLevels.PLATINUM,10);
-        Shop shop = new Shop(Player.getPublicPlayer());
-        shop.printSales();
-        shop.purchaseItem(shop.getArmour());
         FightManager fightManager = new FightManager();
-          EntityManager entityManager = EntityManager.getPublicEntityManager();
+        EntityManager entityManager = EntityManager.getPublicEntityManager();
+        player.coinManager.addCoins(CoinLevels.PLATINUM,10);
+        for (int i = 0; i < 1000; i++) {
+            player.getInventoryManager().weapons.add(lootManager.GenerateWeapon(player,entityManager.generateNewEntity(player)));
+        }
+        player.getInventoryManager().printWeapons();
+        long startime = System.nanoTime();
+        player.getInventoryManager().weaponSortRarity();
+        long elapsedTime = System.nanoTime() - startime;
+        System.out.println("*".repeat(70));
+        player.getInventoryManager().printWeapons();
+        System.out.println(elapsedTime);
 
-          for(int i = 0; i < 100; i++) {
-              System.out.println(player.getLocation().getXCoordinate());
-              System.out.println(player.getLocation().getYCoordinate());
-              userInterFace.playerMovementInterface();
-
-          }
+//          for(int i = 0; i < 100; i++) {
+//              System.out.println(player.getLocation().getXCoordinate());
+//              System.out.println(player.getLocation().getYCoordinate());
+//              userInterFace.playerMovementInterface();
+//              worldManager.printMap();
+//          }
 
 
 
@@ -53,8 +58,10 @@ enum CoinLevels{
     }
 }
 //endregion
-class UserInterFace{
-    UserInterFace(){
+class UserInterface {
+    private static final UserInterface PublicUserInterFace = new UserInterface();
+    UserInterface(){
+
     }
     //region string colors
     protected String red = "\u001B[31m";
@@ -77,8 +84,7 @@ class UserInterFace{
     protected int threadInterrupts = 0;
     private final Scanner scanner = new Scanner(System.in);
     //only a single instance is needed to deal with UI;
-    private static final UserInterFace PublicUserInterFace = new UserInterFace();
-    static UserInterFace getUserInterFace(){
+    public static UserInterface getUserInterface(){
         return PublicUserInterFace;
     }
     public void playerMovementInterface(){
@@ -415,7 +421,7 @@ class UserInterFace{
         return chosenOption;
     }
     public void purchaseModeShopUi(Shop shop){
-        System.out.println("1:Purchase " + shop.getWeapon().getItemName() + "\n2:Purchase " + shop.getArmour().getItemName() + "\n3:Purchase " + shop.getHealthPotion() + "\n4:Switch to view mode\n5:Leave Shop");
+        System.out.println("1:Purchase " + shop.getWeapon().getItemName() + "\n2:Purchase " + shop.getArmour().getItemName() + "\n3:Purchase " + shop.getHealthPotion().getItemName() + "\n4:Switch to view mode\n5:Leave Shop");
         String chosenAction = scanner.nextLine();
         switch (chosenAction){
             case "1" -> {
@@ -442,17 +448,21 @@ class UserInterFace{
     }
     public void viewModeShopUi(Shop shop){
         shop.printSales();
-        System.out.println("1:View " + shop.getWeapon().getItemName() + "\n2:View " + shop.getArmour().getItemName() + "\n3:Purchase " + shop.getHealthPotion() + "\n4:Switch to purchase mode\n5:Leave Shop");
+        pause(1000);
+        System.out.println("1:View " + shop.getWeapon().getItemName() + "\n2:View " + shop.getArmour().getItemName() + "\n3:View " + shop.getHealthPotion().getItemName() + "\n4:Switch to purchase mode\n5:Leave Shop");
         String chosenAction = scanner.nextLine();
         switch (chosenAction){
             case "1" -> {
                 shop.getWeapon().PintWeaponStats();
+                pause(1000);
             }
             case "2" -> {
                 shop.getArmour().PrintArmourStats();
+                pause(1000);
             }
             case "3" -> {
                 shop.getHealthPotion().printStats();
+                pause(1000);
             }
             case "4" -> {
                 purchaseModeShopUi(shop);
@@ -658,7 +668,7 @@ class CoinManager{
 class FightManager{
     //todo add public version of fight manager.
   protected static FightManager publicFightManager = new FightManager();
-   private final  UserInterFace userInterFace = UserInterFace.getUserInterFace();
+   private final UserInterface userInterFace = UserInterface.getUserInterface();
    protected final LootManager lootManager = LootManager.getLootManager();
         //will contain all functions to deal with battles
         // only one instance needed.
@@ -758,7 +768,7 @@ class LootManager{
     //region lists of loot modifier names
     private final List<String> PositiveWeaponNameModifiers = Arrays.asList("Razor-Sharp","Ethereal","Frost-Forged","Quantum-Tempered","Swift-Steel","Radiant","Adamantine","Runic","Noble","Iridescent","Astral","Verdant","Obsidian","Celestial","Vorpal","Gilded","Draconian","Ionized","Flaming","Destructive","Unstoppable");
     private final List<String> NegativeWeaponNameModifiers = Arrays.asList("Rusty","Damaged","Broken","Weak","Warped","Fractured","Dull","Feeble","Cracked","Dilapidated");
-    private final List<String> WeaponNames = Arrays.asList("Claymore","Broad Sword","Reaper","Shadow's Bane","Ember Blade","Icy Talon","Glaive","Polearm","Night Fang","Trident","Dagger","Dirk","Ice-Pick","Gladius","Pike","War Hammer","Spear","Cleaver","Flail","Mace");
+    private final List<String> WeaponNames = Arrays.asList("Karambit","Claymore","Broad Sword","Reaper","Shadow's Bane","Ember Blade","Icy Talon","Glaive","Polearm","Night Fang","Trident","Dagger","Dirk","Ice-Pick","Gladius","Pike","War Hammer","Spear","Cleaver","Flail","Mace");
     private final List<String> PositiveArmourModifiers = Arrays.asList("Adamantine","Frost Bound","Glacial Steel","Polished","Sapphire","Timeless","Glistening","Impenetrable","Thundering","Dragon Scale");
     private final List<String> ArmourNames = Arrays.asList("Mail","Plate","Plate-Mail","Breastplate","Brigandine","Cloak","Tunic","Robe","Scale Mail");
     private final List<String> NegativeArmourModifiers = Arrays.asList("Broken","Weak","Rusty","Threadbare","Shoddy","Tattered","Shabby");
@@ -1046,7 +1056,79 @@ class LootManager{
         };
         return coloredName;
     }
+
     //endregion
+}
+class InventoryManager{
+    ArrayList<Weapon> weapons;
+    ArrayList<Armour> armours;
+    ArrayList<HealthPotion> potions;
+    InventoryManager() {
+        this.weapons = new ArrayList<>();
+        this.armours = new ArrayList<>();
+        this.potions = new ArrayList<>();
+    }
+    //region weaponSorting and printing
+    public void printWeapons(){
+        for (int i = 0, weaponsSize = weapons.size(); i < weaponsSize; i++) {
+            Weapon weapon = weapons.get(i);
+            System.out.println(i + 1 +": " + weapon.getItemName().concat(" damage:") + weapon.getWeaponBaseDamage());
+        }
+    }
+    public void weaponSortDamage(ArrayList<Weapon> list){
+       weapons.sort(Comparator.comparingInt(Weapon::getWeaponBaseDamage));
+    }
+
+    public void weaponSortRarity(){
+        weapons.sort(Comparator.<Weapon, ItemRarity>comparing(Item::getRarity, Comparator.reverseOrder()).thenComparing(Weapon::getWeaponBaseDamage,Comparator.reverseOrder()));
+    }
+    //endregion
+    //region armour sort and print options.
+    public void printArmours(){
+        for (int i = 0, armoursSize = armours.size(); i < armoursSize; i++) {
+            Armour armour = armours.get(i);
+            System.out.println(i + 1 +": " + armour.getItemName().concat(" defense:") + armour.getDefense());
+        }
+    }
+    public void armourSortDefense(){
+        armours.sort(Comparator.comparingInt(Armour::getDefense));
+    }
+    public void armourSortRarity(){
+        armours.sort(Comparator.<Armour, ItemRarity>comparing(Item::getRarity,Comparator.reverseOrder()).thenComparing(Armour::getDefense,Comparator.reverseOrder()));
+    }
+    //endregion
+    //region Health potion printing and sorting methods;
+    public void printPotions(){
+        for (int i = 0; i < potions.size(); i++) {
+            System.out.println(i+1 + ": ".concat(potions.get(i).getItemName()));
+        }
+    }
+    public void potionSortLevel(){
+        potions.sort(Comparator.comparing(HealthPotion::getHealingLevel,Comparator.reverseOrder()));
+    }
+    //endregion
+    //region add and remove overloads
+    public void add(Weapon weapon){
+        weapons.add(weapon);
+    }
+    public void add(Armour armour){
+        armours.add(armour);
+    }
+    public void add(HealthPotion healthPotion){
+        potions.add(healthPotion);
+    }
+    public void remove(Weapon weapon){
+        weapons.remove(weapon);
+    }
+    public void remove(Armour armour){
+        armours.remove(armour);
+    }
+    public void remove(HealthPotion healthPotion){
+        potions.remove(healthPotion);
+    }
+    //endregion
+
+
 
 }
 class EntityManager {
@@ -1164,12 +1246,6 @@ class EntityManager {
     //endregion
 }
 class WorldManager {
-    Random rand = new Random();
-    protected static WorldManager publicworldManager = new WorldManager(10,10);
-    protected Player player = Player.getPublicPlayer();
-    protected UserInterFace userInterFace = UserInterFace.getUserInterFace();
-    private ArrayList<Shop> visitedShops;
-
     WorldManager(int rows, int columns) {
         this.map = generateMap(rows,columns);
     }
@@ -1177,6 +1253,12 @@ class WorldManager {
     public static WorldManager getPublicWorldManager(){
       return publicworldManager;
     }
+    Random rand = new Random();
+    protected static WorldManager publicworldManager = new WorldManager(10,10);
+    protected Player player = Player.getPublicPlayer();
+    protected UserInterface ui =new UserInterface();
+
+    private final ArrayList<Shop> visitedShops = new ArrayList<>();
 
     private Rooms[][] generateMap(int rows, int columns) {
         //dynamically generate map based on
@@ -1184,9 +1266,9 @@ class WorldManager {
         for (int x = 0; x < rows; x++) {
             for (int y = 0; y < columns; y++) {
                 int roll = rand.nextInt(0, 100) + 1;
-                final int superTreasureChance = 94;
-               final int treasureChance = 84;
-               final int shopChance = 69;
+                final int superTreasureChance = 94; //set to 94
+               final int treasureChance = 84;// set to 84
+               final int shopChance = 1;//set to 69
                 if (roll > superTreasureChance) {
                     map[x][y] = Rooms.SUPERTREASURE;
                 } else if (roll > treasureChance) {
@@ -1234,6 +1316,7 @@ class WorldManager {
         Location location = player.getLocation();
         if (location.getYCoordinate() != map.length -1){
             location.incrementYCoordinate();
+            System.out.println(visitedShops);
             startEncounter();
         }
         else {
@@ -1261,6 +1344,7 @@ class WorldManager {
         Rooms roomType = determineEncounterType();
         switch (roomType){
             case SHOP -> {
+                resolveShopEncounter();
             }
             case ENEMY -> {
                 resolveEnemyEncounter();
@@ -1303,18 +1387,28 @@ class WorldManager {
         //first see if the player has been to the shop before;
         boolean shopUsed = false;
         if(!visitedShops.isEmpty()){
-            for(Shop s : visitedShops){
-                if (s.getLocation().getYCoordinate() == player.getLocation().getYCoordinate() && s.getLocation().getXCoordinate() == player.getLocation().getXCoordinate()){
-                    userInterFace.viewModeShopUi(s);
+            for (int i = visitedShops.size() - 1; i >= 0; i--) {
+                Shop shop = visitedShops.get(i);
+                System.out.println("Shop location = "+ shop.getLocation().getXCoordinate() + "," + shop.getLocation().getYCoordinate());
+                System.out.println(shop.getLocation().getYCoordinate() == player.getLocation().getYCoordinate() && shop.getLocation().getXCoordinate() == player.getLocation().getXCoordinate() && !shopUsed);
+                if (shop.getLocation().getYCoordinate() == player.getLocation().getYCoordinate() && shop.getLocation().getXCoordinate() == player.getLocation().getXCoordinate() && !shopUsed){
+                    ui.viewModeShopUi(shop);
                     shopUsed = true;
+                }
+                else if (shopUsed){
+                    break;
                 }
             }
             if (!shopUsed){
                 Shop shop = new Shop(player);
                 visitedShops.add(shop);
-                userInterFace.viewModeShopUi(shop);
+                ui.viewModeShopUi(shop);
             }
-
+        }
+        else {
+            Shop shop = new Shop(player);
+            visitedShops.add(shop);
+            ui.viewModeShopUi(shop);
         }
     }
 }
@@ -1324,13 +1418,12 @@ class Shop{
     private final LootManager lootManager = LootManager.getLootManager();
 
     private final EntityManager entityManager = EntityManager.getPublicEntityManager();
-    private final CoinManager coinConverter;
     private final Player player = Player.getPublicPlayer();
-
+    private final WorldManager worldManager = WorldManager.getPublicWorldManager();
     private final Armour armour;
-    private ItemCost armourItemCost;
+    private final ItemCost armourItemCost;
     private final Weapon weapon;
-    private ItemCost weaponItemCost;
+    private final ItemCost weaponItemCost;
     private final HealthPotion healthPotion;
     private final ItemCost healthPotionCost;
     private final double playerLevel;//ensure this is only set once on instantiation otherwise it would break everything.
@@ -1339,9 +1432,9 @@ class Shop{
 
     Shop(Player player){
         this.playerLevel = player.getPlayerLevel();
-        this.location = player.getLocation();
+        this.location = new Location(player.getLocation().getXCoordinate(),player.getLocation().getYCoordinate());
         this.shopLevel = playerLevel + 1.7;
-        this.coinConverter = new CoinManager(0,0,0,0);
+        CoinManager coinConverter = new CoinManager(0, 0, 0, 0);
         this.healthPotion = generateHealthPotionForSale();
         this.armour = generateArmourForSale();
         this.armourItemCost = generateItemCost(armour);
@@ -1431,10 +1524,13 @@ class Shop{
     }
 
     public void printSales(){
+        String resetColor = "\u001B[0m";
+        String magenta = "\u001B[35m";
+        System.out.println(magenta + "*".repeat(35) + "Shop Sales" + "*".repeat(35)+ resetColor);
         char firstCharOfWeaponName = weapon.getItemName().toLowerCase().charAt(5);
         boolean presentationModifier = firstCharOfWeaponName =='a'|| firstCharOfWeaponName =='e'|| firstCharOfWeaponName =='i'|| firstCharOfWeaponName == 'o'|| firstCharOfWeaponName == 'u';
         System.out.println("You see a pedestal with " + (presentationModifier ? "an " : "a ") + weapon.getItemName() + " resting on it.");
-        System.out.println("Underneath it is a sight that says\n \"Weapon for Sale!\"");
+        System.out.println("Underneath it is a sight that says\n\"Weapon for Sale!\"");
         weaponItemCost.printTotalCost();
         System.out.println("Next to the first pedestal is another, this one with armour.");
         System.out.println(armour.getItemName());
@@ -1442,13 +1538,15 @@ class Shop{
         System.out.println("A third pedestal has a Healing potion on top");
         System.out.println(healthPotion.getItemName());
         healthPotionCost.printTotalCost();
+        System.out.println("you are at shop: " + this);
+        System.out.println(magenta + "*".repeat(80)+ resetColor);
 
+    }
     }
 
 
 
 
-}
 class Location{
     private int xCoordinate;
     private int yCoordinate;
@@ -1712,7 +1810,7 @@ class Player{
      */
     private static final HashMap<Item,Integer> playerInv = new HashMap<>();
     public CoinManager coinManager;
-    private static final Player  publicPlayer = new Player(50,50,0,0.5,new Weapon("Fists",1000,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),new CoinManager(0,0,0,0));
+    private static final Player  publicPlayer = new Player(50,50,0,12.5,new Weapon("Fists",1000,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),new CoinManager(0,0,0,0));
 
     //region player attributes
     private int maxHealth;
@@ -1722,9 +1820,7 @@ class Player{
     private Weapon equippedWeapon;
     private Armour equippedArmour;
     private final Location location;
-    private ArrayList<Weapon> armory;
-    private ArrayList<Armour> closet;
-    private  ArrayList<HealthPotion> potionCupBoard;
+    private final InventoryManager inventoryManager;
 
    private HashMap<Item,Integer> inventory;
    //endregion-
@@ -1737,20 +1833,13 @@ class Player{
         this.equippedWeapon = equippedWeapon;
         this.equippedArmour = equippedArmour;
         this.location = new Location(0,0);
-        this.closet = new ArrayList<Armour>();
-        this.armory = new ArrayList<Weapon>();
-        this.potionCupBoard = new ArrayList<HealthPotion>();
-
-
-
+        this.inventoryManager = new InventoryManager();
     }
 
     public static Player getPublicPlayer() {
         return publicPlayer;
     }
-
     //region getter functions
-
     public Location getLocation() {
         return location;
     }
@@ -1775,6 +1864,11 @@ class Player{
     public Armour getEquippedArmour(){
         return equippedArmour;
     }
+
+    public InventoryManager getInventoryManager() {
+        return inventoryManager;
+    }
+
     //endregion
     //region Setter functions
     public void setMaxHealth(int newMaxHealth){
@@ -1820,57 +1914,36 @@ class Player{
         char firstCharOfItemName = weapon.getItemName().toLowerCase().charAt(5);
         boolean presentationModifier = firstCharOfItemName =='a'||firstCharOfItemName =='e'||firstCharOfItemName =='i'||firstCharOfItemName == 'o'|| firstCharOfItemName == 'u';
        System.out.println((presentationModifier ? "an " : "a ") + weapon.getItemName() + " was added to your inventory.");
-       armory.add(weapon);
+        inventoryManager.add(weapon);
+        //TODO implement new inventory management.
     }
     public void addToInventory(Armour armour){
         char firstCharOfItemName = armour.getItemName().toLowerCase().charAt(5);
         boolean presentationModifier = firstCharOfItemName =='a'||firstCharOfItemName =='e'||firstCharOfItemName =='i'||firstCharOfItemName == 'o'|| firstCharOfItemName == 'u';
         System.out.println((presentationModifier ? "an " : "a ") + armour.getItemName() + " was added to your inventory.");
-        closet.add(armour);
+        inventoryManager.add(armour);
     }
     public void addToInventory(HealthPotion healingPotion){
         char firstCharOfItemName = healingPotion.getItemName().toLowerCase().charAt(5);
         boolean presentationModifier = firstCharOfItemName =='a'||firstCharOfItemName =='e'||firstCharOfItemName =='i'||firstCharOfItemName == 'o'|| firstCharOfItemName == 'u';
         System.out.println((presentationModifier ? "an " : "a ") + healingPotion.getItemName() + " was added to your inventory.");
-        potionCupBoard.add(healingPotion);
-    }
-    public void consumeItem(Item item){
-        int currentItemQuantity = inventory.get(item);
-        int newItemQuantity = (currentItemQuantity - 1);
-        if(newItemQuantity > 1){
-            inventory.put(item,newItemQuantity);
-            //player consumes an item.
-        }
-        else if(newItemQuantity == 0){
-            inventory.remove(item);
-            //player uses the last of an Item.
-
-        }
-        else{
-            System.out.println("Uh oh it looks like you tried to remove an Weapon not in the players inventory something ain't right");
-            // this would most likely be caused if a consume Weapon was called without first checking has Weapon.
-        }
-
+        inventoryManager.add(healingPotion);
     }
     public void EquipWeapon(Weapon newWeapon){
-        if(inventory.containsKey(equippedWeapon)){
-            inventory.put(equippedWeapon,(inventory.get(equippedWeapon)+1));
+        if(inventoryManager.weapons.contains(newWeapon)){
+            inventoryManager.weapons.add(equippedWeapon);
+            equippedWeapon = newWeapon;
+            System.out.println(newWeapon.getItemName().concat(" has been equipped"));
+            inventoryManager.weapons.remove(newWeapon);
         }
-        else{
-            inventory.put(equippedWeapon,1);
-
-        }
-        equippedWeapon = newWeapon;
-
     }
     public void EquipArmour(Armour newArmour) {
-        if (inventory.containsKey(equippedArmour)) {
-            inventory.put(equippedArmour, (inventory.get(equippedArmour) + 1));
-        } else {
-            inventory.put(equippedArmour, 1);
-
+        if(inventoryManager.armours.contains(newArmour)){
+            inventoryManager.armours.add(newArmour);
+            equippedArmour = newArmour;
+            System.out.println(equippedArmour.getItemName().concat(" has been equipped"));
+            inventoryManager.armours.remove(newArmour);
         }
-        equippedArmour = newArmour;
     }
     public void ConsumeHealthPotion(HealthPotion potion){
         int currentItemQuantity = inventory.get(potion);
@@ -1892,6 +1965,7 @@ class Player{
     public void AddExp(double amount){
         playerLevel += amount;
         //todo add thing that checks level up for healing but that can come later.
+
     }
     // endregion
     //region player checks
