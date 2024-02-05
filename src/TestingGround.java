@@ -5,6 +5,14 @@ public class TestingGround {
 
     public static void main(String[] args) {
         Random random = new Random();
+        try {
+
+            System.in.read();
+        }
+        catch (Exception e){
+
+
+        }
         Location location = new Location(7,10);
         Location location1 = new Location(7,10);
         System.out.println(location1);

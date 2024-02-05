@@ -4,30 +4,21 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+
           UserInterface userInterFace = UserInterface.getUserInterface();
+          userInterFace.printWelcomingMessage();
           WorldManager worldManager = WorldManager.getPublicWorldManager();
           LootManager lootManager = LootManager.getLootManager();
         Player player = Player.getPublicPlayer();
         FightManager fightManager = new FightManager();
         EntityManager entityManager = EntityManager.getPublicEntityManager();
         player.coinManager.addCoins(CoinLevels.PLATINUM,10);
-        for (int i = 0; i < 1000; i++) {
-            player.getInventoryManager().weapons.add(lootManager.GenerateWeapon(player,entityManager.generateNewEntity(player)));
-        }
-        player.getInventoryManager().printWeapons();
-        long startime = System.nanoTime();
-        player.getInventoryManager().weaponSortRarity();
-        long elapsedTime = System.nanoTime() - startime;
-        System.out.println("*".repeat(70));
-        player.getInventoryManager().printWeapons();
-        System.out.println(elapsedTime);
-
-//          for(int i = 0; i < 100; i++) {
-//              System.out.println(player.getLocation().getXCoordinate());
-//              System.out.println(player.getLocation().getYCoordinate());
-//              userInterFace.playerMovementInterface();
-//              worldManager.printMap();
-//          }
+          for(int i = 0; i < 100; i++) {
+              System.out.println(player.getLocation().getXCoordinate());
+              System.out.println(player.getLocation().getYCoordinate());
+              userInterFace.playerMovementInterface();
+              worldManager.printMap();
+          }
 
 
 
@@ -91,32 +82,137 @@ class UserInterface {
         System.out.println("\n\nChose a direction to move.");
        String chosenDirection =  scanner.nextLine().toLowerCase();
         switch (chosenDirection){
-            case "up","north","n"->{
-                worldManager.moveNorth();
-                break;
-            }
-            case "right","east","e" ->{
-                 worldManager.moveEast();
-            }
-            case "down","south","s"->{
-                worldManager.moveSouth();
-            }
-            case "left","west","w" ->{
-                worldManager.moveWest();
-            }
+            case "up","north","n"-> worldManager.moveNorth();
+            case "right","east","e" -> worldManager.moveEast();
+            case "down","south","s"-> worldManager.moveSouth();
+            case "left","west","w" -> worldManager.moveWest();
             case "help"->{
-                System.out.println("To move north type \"up\",\"north\" or \"n\"");
-                System.out.println("To move east type \"right\",\"east\" or \"e\"");
-                System.out.println("To move south type \"down\",\"south\" or \"s\"");
-                System.out.println("To move west type \"left\",\"west\" or \"w\"");
+                System.out.println("To move north type \"up\",\"north\" or \"n\".");
+                System.out.println("To move east type \"right\",\"east\" or \"e\".");
+                System.out.println("To move south type \"down\",\"south\" or \"s\".");
+                System.out.println("To move west type \"left\",\"west\" or \"w\".");
+                pressEnterToContinue();
                 playerMovementInterface();
             }
             default -> {
                 System.out.println(chosenDirection.concat(" was not an option please try again."));
-                System.out.println("If you would like help with movement commands type \"help\".");
+                System.out.println("If you would like help with movement commands type. \"help\".");
                 playerMovementInterface();
             }
         }
+    }
+    public static void pressEnterToContinue(){
+       System.out.println("Press enter to continue");
+        try {
+            System.in.read();
+        }
+        catch (Exception e){
+        }
+    }
+    public void choseInventoryAction(Player player){
+        final String menu = "1:Weapons\n2:Armour\n3:Health Potions\n4:Back";
+        System.out.println(magenta + "*".repeat(45) + resetColor);
+        System.out.println(menu);
+        int chosenAction = scanner.nextInt();
+        switch (chosenAction){
+            case 1 -> weaponInventoryAction(player);
+            case 2 -> armourInventoryAction(player);
+            case 3 -> healthPotionInventoryAction(player);
+            case 4 -> {
+            }
+            default -> {
+                System.out.println(chosenAction + " was not an option please try again.");
+                choseInventoryAction(player);
+                }
+        }
+        pressEnterToContinue();
+    }
+    private void healthPotionInventoryAction(Player player){
+        final String menu = "1:Consume Health Potion\n2:Sort and view potions by healing level";
+        System.out.println(magenta + "*".repeat(45) + resetColor);
+        System.out.println(menu);
+        int choice = scanner.nextInt();
+        switch (choice){
+            case 1 -> {
+                player.getInventoryManager().printPotions();
+                player.consumeHealthPotion(player.getInventoryManager().getPotionAt(player.getInventoryManager().potions.size()));
+            }
+            case 2 -> {
+                System.out.println("Would you like to sort by healing level? Y/N");
+                String sort = scanner.nextLine().toLowerCase();
+                if (sort.equals("y")){
+                    player.getInventoryManager().potionSortLevel();
+                }
+                player.getInventoryManager().printPotions();
+            }
+            default -> {
+                System.out.println(choice + " was not an option please try again.");
+                healthPotionInventoryAction(player);
+            }
+        }
+        pressEnterToContinue();
+    }
+    private void armourInventoryAction(Player player){
+        final String menu = "1:Equip new armour\n2:View and sort all armour\n3:View equipped armour\n4:Back";
+        System.out.println(magenta + "*".repeat(45) + resetColor);
+        System.out.println(menu);
+        int choice = scanner.nextInt();
+        switch (choice){
+            case 1 ->{
+                player.getInventoryManager().printArmours();
+                player.equipArmour(player.getInventoryManager().getArmourAt(getUserInterface().choseItemFromList(player.getInventoryManager().armours.size())));
+            }
+            case 2 -> {
+                System.out.println("Would you like to sort armour by\n1:defense\n2:rarity then sub-sort by defense\n3:don't sort.");
+                int chosenAction = scanner.nextInt();
+                switch (chosenAction){
+                    case 1 -> player.getInventoryManager().armourSortDefense();
+                    case 2 -> player.getInventoryManager().armourSortRarity();
+                    default -> {
+                        //do nothing and keep previous sort.
+                    }
+                }
+                player.getInventoryManager().printArmours();
+            }
+            case 3 -> player.getEquippedArmour().PrintArmourStats();
+            case 4 -> {
+            }
+            default -> {
+                System.out.println(choice + "was not an action please try again.");
+                armourInventoryAction(player);
+            }
+        }
+        pressEnterToContinue();
+    }
+    private void weaponInventoryAction(Player player){
+        final String weaponsMenu = "1:Equip new weapon\n2:View and sort all weapons\n3:View equipped weapon\n4:Back";
+        System.out.println(magenta + "*".repeat(45) + resetColor);
+        System.out.println(weaponsMenu);
+        int choice = scanner.nextInt();
+        switch (choice){
+            case 1 -> {
+                player.getInventoryManager().printWeapons();
+                player.equipWeapon(player.getInventoryManager().getWeaponAt(getUserInterface().choseItemFromList(player.getInventoryManager().weapons.size())));
+            }
+            case 2 -> {
+                System.out.println("Would you like to sort your weapons by 1:rarity and sub-sort by damage\n2:sort by damage and sub-sort by rarity?");
+                int chosenOption = scanner.nextInt();
+                switch (chosenOption) {
+                case 1 ->  player.getInventoryManager().weaponSortRarity();
+                case 2 -> player.getInventoryManager().weaponSortDamage();
+                default -> {
+                }
+            }
+                player.getInventoryManager().printWeapons();
+            }
+            case 3 -> player.getEquippedWeapon().printWeaponStats();
+            case 4 -> {
+            }
+            default -> System.out.println(choice + " was not an option please try again.");
+
+
+        }
+        pressEnterToContinue();
     }
     public void pause(int milliseconds){
         try {
@@ -126,14 +222,24 @@ class UserInterface {
         }
 
     }
+    public int choseItemFromList(int max){
+        System.out.println("\nPlease chose a new item to equip");
+        int chosenItem = scanner.nextInt() -1;
+        if (chosenItem < 0 || chosenItem > max){
+            System.out.println("Please try again");
+        }
+        else return chosenItem;
+        return 0;
+    }
     public void printWelcomingMessage(){
         // welcome user to the game and let them read the rules if desired.
-        final String AsteriskFrame = "\t\t***************************************************\t\t";
+        final String AsteriskFrame = "****************************************".repeat(4);
         boolean userUnderstands = false;
         //region print instructions to user
         System.out.println(AsteriskFrame);
-        System.out.println("Welcome to the Game!");
-        System.out.println("Made by Liam Jasper Gimbel");
+        System.out.println("\t".repeat(20)+ "Welcome to the Game!");
+        System.out.println("\t".repeat(20)+"Made by Liam Jasper Gimbel");
+        pressEnterToContinue();
         System.out.println("This game is played by typing text into the output terminal.\nWhich conveniently happens to be the area you are reading this text from");
         System.out.println("Sometimes the terminal will prompt you with yes or no questions these will usually be designated with a Y/N");
         System.out.println("To answer these question please use Y or y for yes and N or n for no");
@@ -164,6 +270,7 @@ class UserInterface {
                 default -> System.out.println("Please try again as " + userInput + " is not a valid option.");
             }
         }while (!(userUnderstands));
+        mainMenuMenuOutMostSelectionLogic(false);
     }
     public void mainMenuMenuOutMostSelectionLogic(boolean readInstructions){
         boolean hasChosen = false;
@@ -208,9 +315,7 @@ class UserInterface {
                     hasChosen = true;
                     System.exit(0);
                 }
-                default -> {
-                    System.out.println(userChoice.concat(" Was not an option please try again"));
-                }
+                default -> System.out.println(userChoice.concat(" Was not an option please try again"));
             }
         }while(!hasChosen);
     }
@@ -246,13 +351,14 @@ class UserInterface {
         System.out.println("Also note that player level while has no upper bound, setting it to values over 100.0 will make the stats go to extreme levels.Feel free to try though as it wont break.");
         System.out.println("Finally note that the player level displayed in game may not  be directly the same as the player level input.");
         //endregion
+        pressEnterToContinue();
         playerEntityGenerator();
     }
     public void printGameInstructionsItemsAndLoot(){
         System.out.println(green+"Welcome to the Items & Loot Section of the instructions"+ resetColor);
         pause(400);
-        System.out.println("In the current state of the game there are three different types of loot");
-        System.out.println("\t-Potions of Healing\n\t-Weapons\t-Armour\nI am aware i am using the British spelling but it is objectively better.");
+        System.out.println("In the current state of the game there are four different types of loot");
+        System.out.println("\t-Potions of Healing\n\t-Weapons\n\t-Armour\n\t-Coins\nI am aware i am using the British spelling but it is objectively better.");
         System.out.println("First we will go over healing potions");
         System.out.println("\tPotions are simple they come in a variety of sizes.");
         System.out.println("\tThese sizes are as follows in order of worst to best\n\tMini\n\tLesser\n\tNormal\n\tGreater\n\tGrand\n\tOMEGA");
@@ -275,17 +381,69 @@ class UserInterface {
         System.out.println("\tThe first is defense which works the same way as it does for enemies so all incoming damage will be reduced by your defense.");
         System.out.println("\tIf your defense is higher that the incoming damage you will take no damage.");
         System.out.println("\tThe next stat is dodge chance.This is a stats that enemies do not have this is the chance to completely avoid all damage.");
+        System.out.println("Coins");
+        System.out.println("\tThere are four types of coins with a simple conversion rate.");
+        System.out.println("\t100 copper coins = 1 silver coin");
+        System.out.println("\t100 silver coins = 1 gold coin");
+        System.out.println("\t100 gold coins = 1 platinum coin");
+        System.out.println("\tAnything that uses coins will automatically convert these for you so there is no need to worry.");
         System.out.println("The way items work is you will chose an armour and a weapon to equip and can change them at any time during your action phase(more on that later)");
-        System.out.println("Items will be dropped and added directly to your inventory upon successfully killing and enemy.");
+        System.out.println("Items will be dropped and added directly to your inventory upon successfully killing and enemy,purchasing from a shop, or enter a treasure or super treasure room.(more on these later");
         System.out.println("That is all to items feel free to use the item generator to generate some items,however unlike enemies which only use two player stats item generation is much more complex\nSo don't expect results to be identical to actual gameplay");
-        System.out.println("Also you're almost done with the directions only one page to go!!");
+        System.out.println("Also you're almost done with the directions only one more page to go!!");
+        pressEnterToContinue();
         playerWeaponAndArmourGenerator();
 
 
     }
+    public void printGameInstructionsPhasesAndInventory(){
+        System.out.println(green + "Welcome to the gameplay phases and inventory instructions" + resetColor);
+        System.out.println("When you enter a fight you will be prompted with 4 options Fight, Check, Flee, Inventory");
+        System.out.println("Fight");
+        System.out.println("\tThese are you available actions if you chose to fight you will deal damage to the enemy and they may deal damage to you.");
+        System.out.println("\tFighting ends you turn meaning the enemy will get to hit you.");
+        System.out.println("Check");
+        System.out.println("\tChecking will let you see the enemy health and some stats.");
+        System.out.println("\tUnlike fighting, checking does not take an action.");
+        System.out.println("Flee");
+        System.out.println("\tFleeing will give you a chance to escape, however the chance for you to get away depends on how much you have injured the enemy.");
+        System.out.println("\tThe more damaged an enemy is the more likely fleeing will be successful");
+        System.out.println("\tBosses CAN NOT be fled from");
+        System.out.println("\tFleeing does take you action so use it wisely.");
+        System.out.println("Inventory");
+        System.out.println("\tChoosing the inventory option will open your inventory menu allowing you to view and access you inventory.");
+        System.out.println("\tWhen you choose the inventory option you will be prompted with what item type you desire to deal with.");
+        System.out.println("\tYou can choose Weapons,Armour,Health Potions,or Coins.");
+        System.out.println("\tWeapons and armour");
+        System.out.println("\t\tUnder weapons and armour you can do three things they are grouped as the actions are the same just on different items..");
+        System.out.println("\t\tYou can equip a new item from you inventory.");
+        System.out.println("\t\tYou can view and sort your weapon or armour inventory by rarity(all), damage(Weapon), and defense(Armour). There is also sub-sorts but that should be self explanatory");
+        System.out.println("\t\tFinally you can view the stats of you currently equipped item.");
+        System.out.println("\tHealing potions");
+        System.out.println("\t\tUnder healing potions you can either consume a healing potion or you can sort your potion inventory by healing level");
+        System.out.println("\tCoins\n\t\tSelecting coins will print your current coin balance");
+        pressEnterToContinue();
+        System.out.println("Rooms and Room Type");
+        System.out.println("There are four types of rooms. Enemy,Shop,Treasure,Super Treasure");
+        System.out.println("\tEnemy");
+        System.out.println("\t\tAn enemy room means you will encounter an enemy. once it is killed it will not respawn.");
+        System.out.println("\tShop");
+        System.out.println("\t\tA shop room sells items for coins.");
+        System.out.println("\t\tPurchasing an item will add it to your inventory.");
+        System.out.println("\t\tOnce you discover a shop it will generate items a little above you level making them very powerful.\n\t\tIf you can not afford an item you can always return to that location as once generated a shop will stay the same.");
+        System.out.println("\tTreasure");
+        System.out.println("\t\tA Treasure room will award you will powerful items.");
+        System.out.println("\tSuper Treasure");
+        System.out.println("\t\tA Super Treasure acts identical to a treasure room but has even more powerful loot.");
+        pressEnterToContinue();
+        System.out.println("\n\nThat is all from me have fun.");
+        pressEnterToContinue();
+        mainMenuMenuOutMostSelectionLogic(true);
+    }
+
     public void playerWeaponAndArmourGenerator(){
         double playerLevel = playerTester.getPlayerLevel();
-        final String LootGenerationMenu = ("1:Generate new Weapon at player level: " + playerLevel +"\n" +"2:Generate a new Armour piece at player level: " + playerLevel + "3:Change player level\n4:Return to Enemy section of Instructions\n" + "5:Return to Items & Loot section of Instructions\n6:Proceed to Player Stats and Gameplay steps\n7:Return to Main Menu");
+        final String LootGenerationMenu = ("1:Generate new Weapon at player level: " + playerLevel +"\n" +"2:Generate a new Armour piece at player level: " + playerLevel + "3:Change player level\n4:Return to Enemy section of Instructions\n" + "5:Return to Items & Loot section of Instructions\n6:Proceed to Gameplay phases and other Instructions.\n7:Return to Main Menu");
         String userChoice;
         boolean again = true;
         System.out.println(LootGenerationMenu);
@@ -293,13 +451,8 @@ class UserInterface {
 
 
         switch (userChoice){
-            case "1"->{
-                lootManager.GenerateWeapon(playerTester, entityManager.generateNewEntity(playerTester)).PintWeaponStats();
-
-            }
-            case "2"->{
-                lootManager.GenerateArmour(playerTester, entityManager.generateNewEntity(playerTester)).PrintArmourStats();
-            }
+            case "1"-> lootManager.GenerateWeapon(playerTester, entityManager.generateNewEntity(playerTester)).printWeaponStats();
+            case "2"-> lootManager.GenerateArmour(playerTester, entityManager.generateNewEntity(playerTester)).PrintArmourStats();
             case "3"->{
                 System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
                 try {
@@ -310,23 +463,20 @@ class UserInterface {
                     System.out.println("um OH NOO AHHHHHHHH!!");
                     pause(1000);
                     e.printStackTrace();
-                    System.out.println("Look what you did\n"+ e.getMessage() + "\nthis probably means you entered a non numerical character but I got you\n\n");
+                    System.out.println("Look what you did\n"+ e.getMessage() + "\nthis probably means you entered a non numerical character but I can fix this.\n\n");
                 }
                 playerTester.setPlayerLevel(playerLevel);
-                break;
             }
             case "4"->{
                 again = false;
                 printGameInstructionsEnemy();
-                break;
             }
             case "5" ->{
                 again = false;
                 printGameInstructionsItemsAndLoot();
-                break;
             }
             case "6"->{
-                //TODO go to gameplay phase instructions
+                printGameInstructionsPhasesAndInventory();
             }
             case "7" ->{
                 again = false;
@@ -340,14 +490,11 @@ class UserInterface {
         double playerLevel = playerTester.getPlayerLevel();
         String userChoice;
         boolean again = true;
-        final String EntityGenerationMenu = ("1:Generate new entity at player level: " + playerLevel +"\n" + "2:Change player level\n3:Return to Enemy section of Instructions\n" + "4:Proceed to Items & Loot section of Instructions\n5:Proceed to Player Stats and Gameplay steps\n6:Return to Main Menu");
+        final String EntityGenerationMenu = ("1:Generate new entity at player level: " + playerLevel +"\n" + "2:Change player level\n3:Return to Enemy section of Instructions\n" + "4:Proceed to Items & Loot section of Instructions\n5:Proceed to Gameplay phases and other Instructions.\n6:Return to Main Menu");
         System.out.println(EntityGenerationMenu);
         userChoice = scanner.nextLine();
         switch (userChoice){
-            case "1"->{
-                entityManager.generateNewEntity(playerTester).PrintAllStats();
-                break;
-            }
+            case "1"-> entityManager.generateNewEntity(playerTester).PrintAllStats();
             case "2"->{
                 System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
                 try {
@@ -361,30 +508,23 @@ class UserInterface {
                     System.out.println("Look what you did\n"+ e.getMessage() + "\nthis probably means you entered a non numerical character but I got you\n\n");
                 }
                 playerTester.setPlayerLevel(playerLevel);
-                break;
             }
             case "3"->{
                 again = false;
                 printGameInstructionsEnemy();
-                break;
             }
             case "4"->{
                 again = false;
                 printGameInstructionsItemsAndLoot();
-                break;
             }
             case "5"->{
-                //TODO add player stats and gameplay phases section of instructions;
+                printGameInstructionsPhasesAndInventory();
             }
             case "6"->{
                 again = false;
                 mainMenuMenuOutMostSelectionLogic(true);
-                break;
             }
-            default -> {
-                System.out.println(userChoice.concat(" Was not an option please try again"));
-                break;
-            }
+            default -> System.out.println(userChoice.concat(" Was not an option please try again"));
         }
         if(again) playerEntityGenerator();
     }
@@ -410,12 +550,8 @@ class UserInterface {
                 chosenOption = BattleOption.FLEE;
 
             }
-            case "4"->{
-                hasChosen = true;
-            }
-            default -> {
-                System.out.println(playerChoice.concat(" was not an option please try again."));
-            }
+            case "4"-> hasChosen = true;
+            default -> System.out.println(playerChoice.concat(" was not an option please try again."));
         }
     }while (!hasChosen);
         return chosenOption;
@@ -424,15 +560,9 @@ class UserInterface {
         System.out.println("1:Purchase " + shop.getWeapon().getItemName() + "\n2:Purchase " + shop.getArmour().getItemName() + "\n3:Purchase " + shop.getHealthPotion().getItemName() + "\n4:Switch to view mode\n5:Leave Shop");
         String chosenAction = scanner.nextLine();
         switch (chosenAction){
-            case "1" -> {
-                shop.purchaseItem(shop.getWeapon());
-            }
-            case "2" -> {
-                shop.purchaseItem(shop.getArmour());
-            }
-            case "3" -> {
-                shop.purchaseItem(shop.getHealthPotion());
-            }
+            case "1" -> shop.purchaseItem(shop.getWeapon());
+            case "2" -> shop.purchaseItem(shop.getArmour());
+            case "3" -> shop.purchaseItem(shop.getHealthPotion());
             case "4" -> {
                 viewModeShopUi(shop);
                 return;
@@ -440,10 +570,9 @@ class UserInterface {
             case "5" -> {
                 return;
             }
-            default -> {
-                System.out.println(chosenAction + " was not an available option please try again.");
-            }
+            default -> System.out.println(chosenAction + " was not an available option please try again.");
         }
+        pressEnterToContinue();
         purchaseModeShopUi(shop);
     }
     public void viewModeShopUi(Shop shop){
@@ -453,7 +582,7 @@ class UserInterface {
         String chosenAction = scanner.nextLine();
         switch (chosenAction){
             case "1" -> {
-                shop.getWeapon().PintWeaponStats();
+                shop.getWeapon().printWeaponStats();
                 pause(1000);
             }
             case "2" -> {
@@ -469,13 +598,11 @@ class UserInterface {
                 return;
             }
             case "5" -> {
-                //TODO figure out how to leave the shop.
-                return;
+                 return;
             }
-            default -> {
-                System.out.println(chosenAction + " was not an available option please try again.");
-            }
+            default -> System.out.println(chosenAction + " was not an available option please try again.");
         }
+        pressEnterToContinue();
         viewModeShopUi(shop);
 
 
@@ -693,7 +820,7 @@ class FightManager{
         }while ((!entity.isDead() && !entity.isAbandoned() && !player.isPlayerDead()));
         if (entity.isDead()){
             lootManager.RollAllLootDrops(player,entity);
-            player.AddExp(entity.getEntityExperience());
+            player.addExp(entity.getEntityExperience());
             player.incrementEntitiesDefeated();
 
         }
@@ -712,7 +839,7 @@ class FightManager{
         int damage = entity.CalculateDamageOut();
         System.out.println(entity.getEntityName() + " tries to hit you for " + damage);
         userInterFace.pause(200);
-        player.CalculateAndDealDamageTaken(damage);
+        player.calculateAndDealDamageTaken(damage);
 
     }
     public void playerTurn(Player player, Entity entity) {
@@ -722,7 +849,7 @@ class FightManager{
             switch (chosenAction) {
                 case FIGHT -> {
                     spentAction = true;
-                    int damage = player.CalculateDamageDealt();
+                    int damage = player.calculateDamageDealt();
                     int defence = entity.getEntityDefense();
                     entity.DamageEntity(damage);
                     System.out.println("You hit the " + entity.getEntityName() + " for " + damage + " raw damage!");
@@ -739,12 +866,9 @@ class FightManager{
                     else {
                         System.out.println("You fail to flee.");
                     }
-                    break;
 
                 }
-                case INVENTORY -> {
-                    //TODO inventory management hell
-                }
+                case INVENTORY -> userInterFace.choseInventoryAction(player);
             }
         }while (!spentAction);
     }
@@ -760,7 +884,6 @@ class LootManager{
     protected final String green = "\u001B[32m";
     protected final String yellow = "\u001B[33m";
     protected final String blue = "\u001B[34m";
-    protected final String magenta = "\u001B[35m";
     protected final String cyan = "\u001B[36m";
     protected final String white = "\u001B[37m";
     protected final String resetColor = "\u001B[0m";
@@ -911,7 +1034,6 @@ class LootManager{
             //use this for rolling boss loot will have a higher chance of better gear for rarity chances see lootTable.txt
             if(lootRoll <= 10){
                 // 10%  common drop chance from boss
-                rarity = ItemRarity.COMMON;
             } else if (lootRoll <= 40) {
                 // 30% uncommon chance from bosses
                 rarity = ItemRarity.UNCOMMON;
@@ -931,7 +1053,6 @@ class LootManager{
             if(lootRoll <= 19){
                 rarity = ItemRarity.TRASH;
             } else if (lootRoll <= 69) {
-                rarity =ItemRarity.COMMON;
             } else if (lootRoll <= 84) {
                 rarity = ItemRarity.UNCOMMON;
             } else if (lootRoll <= 94){
@@ -1069,13 +1190,16 @@ class InventoryManager{
         this.potions = new ArrayList<>();
     }
     //region weaponSorting and printing
+    public Weapon getWeaponAt(int index){
+        return weapons.get(index);
+    }
     public void printWeapons(){
         for (int i = 0, weaponsSize = weapons.size(); i < weaponsSize; i++) {
             Weapon weapon = weapons.get(i);
             System.out.println(i + 1 +": " + weapon.getItemName().concat(" damage:") + weapon.getWeaponBaseDamage());
         }
     }
-    public void weaponSortDamage(ArrayList<Weapon> list){
+    public void weaponSortDamage(){
        weapons.sort(Comparator.comparingInt(Weapon::getWeaponBaseDamage));
     }
 
@@ -1084,6 +1208,9 @@ class InventoryManager{
     }
     //endregion
     //region armour sort and print options.
+    public Armour getArmourAt(int index){
+        return armours.get(index);
+    }
     public void printArmours(){
         for (int i = 0, armoursSize = armours.size(); i < armoursSize; i++) {
             Armour armour = armours.get(i);
@@ -1098,6 +1225,9 @@ class InventoryManager{
     }
     //endregion
     //region Health potion printing and sorting methods;
+    public HealthPotion getPotionAt(int index){
+        return potions.get(index);
+    }
     public void printPotions(){
         for (int i = 0; i < potions.size(); i++) {
             System.out.println(i+1 + ": ".concat(potions.get(i).getItemName()));
@@ -1268,7 +1398,7 @@ class WorldManager {
                 int roll = rand.nextInt(0, 100) + 1;
                 final int superTreasureChance = 94; //set to 94
                final int treasureChance = 84;// set to 84
-               final int shopChance = 1;//set to 69
+               final int shopChance = 69;//set to 69
                 if (roll > superTreasureChance) {
                     map[x][y] = Rooms.SUPERTREASURE;
                 } else if (roll > treasureChance) {
@@ -1343,21 +1473,11 @@ class WorldManager {
     public void startEncounter(){
         Rooms roomType = determineEncounterType();
         switch (roomType){
-            case SHOP -> {
-                resolveShopEncounter();
-            }
-            case ENEMY -> {
-                resolveEnemyEncounter();
-            }
-            case TREASURE -> {
-                resolveTreasureRoomEncounter();
-            }
-            case SUPERTREASURE -> {
-                resolveSuperTreasureEncounter();
-            }
-            case CLEARED -> {
-                System.out.println("It appears that you have been here before.");
-            }
+            case SHOP -> resolveShopEncounter();
+            case ENEMY -> resolveEnemyEncounter();
+            case TREASURE -> resolveTreasureRoomEncounter();
+            case SUPERTREASURE -> resolveSuperTreasureEncounter();
+            case CLEARED -> System.out.println("It appears that you have been here before.");
         }
     }
     public void resolveEnemyEncounter(){
@@ -1776,11 +1896,11 @@ class Weapon extends Item {
    private final int weaponCriticalHitChance;
    private final double weaponCriticalDamageMulti;
 
-    public Weapon(String itemName, int itemBaseDamage, int itemCritChance, double itemCritDamageMulti, ItemRarity rarity){
+    public Weapon(String itemName, int itemBaseDamage, int itemCriticalChance, double itemCriticalDamageMulti, ItemRarity rarity){
         super(itemName,rarity);
         this.weaponBaseDamage = itemBaseDamage;
-        this.weaponCriticalHitChance = itemCritChance;
-        this.weaponCriticalDamageMulti = itemCritDamageMulti;
+        this.weaponCriticalHitChance = itemCriticalChance;
+        this.weaponCriticalDamageMulti = itemCriticalDamageMulti;
         boolean isConsumable = false;
     }
     //region getter functions
@@ -1793,11 +1913,10 @@ class Weapon extends Item {
     public double getWeaponCriticalDamageMulti(){
         return this.weaponCriticalDamageMulti;
     }
-    public void PintWeaponStats(){
+    //endregion
+    public void printWeaponStats(){
         System.out.println(getItemName() +"\nRarity: " + getRarity() + "\nBase Damage: " + weaponBaseDamage + "\nCritical Hit Chance: " + weaponCriticalHitChance + "\nCritical Hit Damage Multiplier: " + weaponCriticalDamageMulti);
     }
-
-    //endregion
 
 }
 //endregion
@@ -1855,16 +1974,12 @@ class Player{
     public double getPlayerLevel(){
         return playerLevel;
     }
-    public HashMap<Item,Integer> getInventory(){
-        return inventory;
-    }
     public Weapon getEquippedWeapon(){
         return equippedWeapon;
     }
     public Armour getEquippedArmour(){
         return equippedArmour;
     }
-
     public InventoryManager getInventoryManager() {
         return inventoryManager;
     }
@@ -1929,7 +2044,7 @@ class Player{
         System.out.println((presentationModifier ? "an " : "a ") + healingPotion.getItemName() + " was added to your inventory.");
         inventoryManager.add(healingPotion);
     }
-    public void EquipWeapon(Weapon newWeapon){
+    public void equipWeapon(Weapon newWeapon){
         if(inventoryManager.weapons.contains(newWeapon)){
             inventoryManager.weapons.add(equippedWeapon);
             equippedWeapon = newWeapon;
@@ -1937,15 +2052,15 @@ class Player{
             inventoryManager.weapons.remove(newWeapon);
         }
     }
-    public void EquipArmour(Armour newArmour) {
+    public void equipArmour(Armour newArmour) {
         if(inventoryManager.armours.contains(newArmour)){
-            inventoryManager.armours.add(newArmour);
+            inventoryManager.armours.add(equippedArmour);
             equippedArmour = newArmour;
             System.out.println(equippedArmour.getItemName().concat(" has been equipped"));
             inventoryManager.armours.remove(newArmour);
         }
     }
-    public void ConsumeHealthPotion(HealthPotion potion){
+    public void consumeHealthPotion(HealthPotion potion){
         int currentItemQuantity = inventory.get(potion);
         int newItemQuantity = (currentItemQuantity - 1);
         if(newItemQuantity > 1){
@@ -1962,7 +2077,7 @@ class Player{
         }
         );
     }
-    public void AddExp(double amount){
+    public void addExp(double amount){
         playerLevel += amount;
         //todo add thing that checks level up for healing but that can come later.
 
@@ -1977,7 +2092,7 @@ class Player{
     }
     //endregion
     //region player calculations
-    public int CalculateDamageDealt(){
+    public int calculateDamageDealt(){
         Random random = new Random();
         Weapon weapon = getEquippedWeapon();
         int baseDamage = weapon.getWeaponBaseDamage();
@@ -1988,7 +2103,7 @@ class Player{
         double finalDamage = criticalHit ? baseDamage * criticalHitDamageMultiplier: baseDamage;
         return (int) finalDamage;
     }
-    public void CalculateAndDealDamageTaken(int rawDamageIn){
+    public void calculateAndDealDamageTaken(int rawDamageIn){
         Armour currentArmour = getEquippedArmour();
         int defense = currentArmour.getDefense();
         int dodgeChance = currentArmour.getDodgeChance();
