@@ -1,24 +1,23 @@
+import org.w3c.dom.ls.LSOutput;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
 
+/**
+ *
+ */
 public class Main {
     public static void main(String[] args) {
 
-          UserInterface userInterFace = UserInterface.getUserInterface();
-          userInterFace.printWelcomingMessage();
-          WorldManager worldManager = WorldManager.getPublicWorldManager();
-          LootManager lootManager = LootManager.getLootManager();
-        Player player = Player.getPublicPlayer();
-        FightManager fightManager = new FightManager();
-        EntityManager entityManager = EntityManager.getPublicEntityManager();
-        player.coinManager.addCoins(CoinLevels.PLATINUM,10);
-          for(int i = 0; i < 100; i++) {
-              System.out.println(player.getLocation().getXCoordinate());
-              System.out.println(player.getLocation().getYCoordinate());
-              userInterFace.playerMovementInterface();
-              worldManager.printMap();
-          }
+        UserInterface userInterFace = UserInterface.getUserInterface();
+        userInterFace.printWelcomingMessage();
+        new FightManager();
+        while (true){
+                userInterFace.playerMovementInterface();
+        }
+
 
 
 
@@ -26,6 +25,7 @@ public class Main {
     }
 }
 //region enumerations
+
 enum Rooms{
 SHOP,ENEMY,TREASURE,SUPERTREASURE,CLEARED
 }
@@ -43,10 +43,7 @@ enum PotionLevel {
     }
 }
 enum CoinLevels{
-    COPPER,SILVER,GOLD,PLATINUM;
-    public CoinLevels getNext() {
-        return values()[(this.ordinal() + 1) % values().length];
-    }
+    COPPER,SILVER,GOLD,PLATINUM
 }
 //endregion
 class UserInterface {
@@ -55,6 +52,8 @@ class UserInterface {
 
     }
     //region string colors
+    public static final String blink = "[5m";
+    public static final String reset = "\u001B[0m";
     protected String red = "\u001B[31m";
     protected String green = "\u001B[32m";
     protected String yellow = "\u001B[33m";
@@ -102,11 +101,10 @@ class UserInterface {
         }
     }
     public static void pressEnterToContinue(){
-       System.out.println("Press enter to continue");
+        System.out.printf("%sPress enter to continue%s%n", blink, reset);
         try {
             System.in.read();
-        }
-        catch (Exception e){
+        } catch (IOException ignored) {
         }
     }
     public void choseInventoryAction(Player player){
@@ -283,7 +281,6 @@ class UserInterface {
                 case "1" ->{
                     hasChosen = true;
                     System.out.println("The adventure begins!");
-                    //TODO call gameplay begin function.
                 }
                 case "2" ->{
                     hasChosen = true;
@@ -345,14 +342,14 @@ class UserInterface {
         System.out.println("\tMeaning if you hit a enemy for 10 damage and they have 5 defense their health will go down by 5.");
         System.out.println("Finally each enemy has a secret value that which is the amount of experience the player gains among killing it");
         System.out.println("\tIn normal gameplay this value will be hidden from the player.");
+        pressEnterToContinue();
         System.out.println("However now you will be allowed to generate creatures at different player levels and view their stats.");
         System.out.println("\nNote:\n"+red+"!!DO NOT SET PLAYER VALUE TO 0 OR A NEGATIVE NUMBER IT WILL BREAK THE PROGRAM!!\n"+resetColor);
         System.out.println("Do also note that there are a few other variables taken into account upon enemy creation so results may vary.");
         System.out.println("Also note that player level while has no upper bound, setting it to values over 100.0 will make the stats go to extreme levels.Feel free to try though as it wont break.");
         System.out.println("Finally note that the player level displayed in game may not  be directly the same as the player level input.");
         //endregion
-        pressEnterToContinue();
-        playerEntityGenerator();
+                playerEntityGenerator();
     }
     public void printGameInstructionsItemsAndLoot(){
         System.out.println(green+"Welcome to the Items & Loot Section of the instructions"+ resetColor);
@@ -475,9 +472,7 @@ class UserInterface {
                 again = false;
                 printGameInstructionsItemsAndLoot();
             }
-            case "6"->{
-                printGameInstructionsPhasesAndInventory();
-            }
+            case "6"-> printGameInstructionsPhasesAndInventory();
             case "7" ->{
                 again = false;
                 mainMenuMenuOutMostSelectionLogic(true);
@@ -517,9 +512,7 @@ class UserInterface {
                 again = false;
                 printGameInstructionsItemsAndLoot();
             }
-            case "5"->{
-                printGameInstructionsPhasesAndInventory();
-            }
+            case "5"-> printGameInstructionsPhasesAndInventory();
             case "6"->{
                 again = false;
                 mainMenuMenuOutMostSelectionLogic(true);
@@ -557,6 +550,7 @@ class UserInterface {
         return chosenOption;
     }
     public void purchaseModeShopUi(Shop shop){
+        Player.getPublicPlayer().coinManager.printBalance();
         System.out.println("1:Purchase " + shop.getWeapon().getItemName() + "\n2:Purchase " + shop.getArmour().getItemName() + "\n3:Purchase " + shop.getHealthPotion().getItemName() + "\n4:Switch to view mode\n5:Leave Shop");
         String chosenAction = scanner.nextLine();
         switch (chosenAction){
@@ -577,7 +571,9 @@ class UserInterface {
     }
     public void viewModeShopUi(Shop shop){
         shop.printSales();
-        pause(1000);
+        pressEnterToContinue();
+        System.out.println("You have:");
+        Player.getPublicPlayer().coinManager.printBalance();
         System.out.println("1:View " + shop.getWeapon().getItemName() + "\n2:View " + shop.getArmour().getItemName() + "\n3:View " + shop.getHealthPotion().getItemName() + "\n4:Switch to purchase mode\n5:Leave Shop");
         String chosenAction = scanner.nextLine();
         switch (chosenAction){
@@ -1384,18 +1380,32 @@ class WorldManager {
       return publicworldManager;
     }
     Random rand = new Random();
-    protected static WorldManager publicworldManager = new WorldManager(10,10);
+    /**
+     * players can Change the numbers bellow 2 variables to change the map size note rows and columns may act inverse as expected.
+     */
+    private static final int rows = 10; // player can specify if desired will change map size
+    private static final int columns = 10; // player can specify if desired will change map size
+    //********************************************************************
+    protected static WorldManager publicworldManager = new WorldManager(rows,columns);
     protected Player player = Player.getPublicPlayer();
     protected UserInterface ui =new UserInterface();
 
     private final ArrayList<Shop> visitedShops = new ArrayList<>();
 
+    /**
+     * Generates the game map
+     * @param rows how many rows across the map is
+     * @param columns how many columns the map is
+     * @return game map of desired size and fills it.
+     */
     private Rooms[][] generateMap(int rows, int columns) {
         //dynamically generate map based on
         Rooms[][] map = new Rooms[rows][columns];
         for (int x = 0; x < rows; x++) {
             for (int y = 0; y < columns; y++) {
                 int roll = rand.nextInt(0, 100) + 1;
+                // * player may also set these to change the spawn rates of certain room the spawn chance is = to the number - the one above it
+                // * and for super treasure it is the number - 100 meaning at its default of 94 it has a 6% spawn rate as 100-94 = 6;
                 final int superTreasureChance = 94; //set to 94
                final int treasureChance = 84;// set to 84
                final int shopChance = 69;//set to 69
@@ -1446,7 +1456,6 @@ class WorldManager {
         Location location = player.getLocation();
         if (location.getYCoordinate() != map.length -1){
             location.incrementYCoordinate();
-            System.out.println(visitedShops);
             startEncounter();
         }
         else {
@@ -1861,7 +1870,6 @@ class Armour extends Item{
         super(itemName,rarity);
         this.defense = defense;
         this.dodgeChance = dodgeChance;
-        boolean isConsumable = false;
     }
     public int getDefense(){
         return defense;
@@ -1881,7 +1889,6 @@ class HealthPotion extends Item{
     public HealthPotion(String itemName, PotionLevel level,ItemRarity rarity){
         super(itemName,rarity);
         this.healingLevel = level;
-        boolean isConsumable = false;
     }
     public PotionLevel getHealingLevel(){
         return healingLevel;
@@ -1901,7 +1908,6 @@ class Weapon extends Item {
         this.weaponBaseDamage = itemBaseDamage;
         this.weaponCriticalHitChance = itemCriticalChance;
         this.weaponCriticalDamageMulti = itemCriticalDamageMulti;
-        boolean isConsumable = false;
     }
     //region getter functions
     public int getWeaponBaseDamage(){
@@ -1927,7 +1933,6 @@ class Player{
      * ensure that player level is not 0 or negative
      * must start at 0.5 or more
      */
-    private static final HashMap<Item,Integer> playerInv = new HashMap<>();
     public CoinManager coinManager;
     private static final Player  publicPlayer = new Player(50,50,0,12.5,new Weapon("Fists",1000,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),new CoinManager(0,0,0,0));
 
@@ -1941,7 +1946,6 @@ class Player{
     private final Location location;
     private final InventoryManager inventoryManager;
 
-   private HashMap<Item,Integer> inventory;
    //endregion-
     public Player (int maxHealth,int currentHealth,int entitiesDefeated,double playerLevel,Weapon equippedWeapon,Armour equippedArmour, CoinManager coinManager){
         this.maxHealth = maxHealth;
@@ -2061,10 +2065,7 @@ class Player{
         }
     }
     public void consumeHealthPotion(HealthPotion potion){
-        int currentItemQuantity = inventory.get(potion);
-        int newItemQuantity = (currentItemQuantity - 1);
-        if(newItemQuantity > 1){
-            inventory.put(potion,newItemQuantity);}
+        getInventoryManager().potions.remove(potion);
         //TODO find final determinate values for health potion healing current values are just placeholders.
             healPlayer(
         switch (potion.getHealingLevel()){
@@ -2087,9 +2088,6 @@ class Player{
     public boolean isPlayerDead(){
         return currentHealth <= 0;
     }
-    public boolean playerHasItem(Item item){
-        return inventory.containsKey(item);
-    }
     //endregion
     //region player calculations
     public int calculateDamageDealt(){
@@ -2103,6 +2101,7 @@ class Player{
         double finalDamage = criticalHit ? baseDamage * criticalHitDamageMultiplier: baseDamage;
         return (int) finalDamage;
     }
+
     public void calculateAndDealDamageTaken(int rawDamageIn){
         Armour currentArmour = getEquippedArmour();
         int defense = currentArmour.getDefense();
@@ -2113,6 +2112,7 @@ class Player{
             int dodgeAttempt = rand.nextInt(100);
             if (dodgeAttempt >= dodgeTarget){
                 damagePlayer(0);
+
             }
         }
         damagePlayer(Math.max(rawDamageIn - defense, 0));

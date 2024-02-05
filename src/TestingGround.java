@@ -5,6 +5,7 @@ public class TestingGround {
 
     public static void main(String[] args) {
         Random random = new Random();
+
         try {
 
             System.in.read();
@@ -17,6 +18,7 @@ public class TestingGround {
         Location location1 = new Location(7,10);
         System.out.println(location1);
         System.out.println(location);
+
 
 
         int iterations = 1000;
@@ -79,7 +81,8 @@ public class TestingGround {
 //
 //        }
     }
-}
+    }
+
 
 
 
