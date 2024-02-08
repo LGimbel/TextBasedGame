@@ -1,6 +1,7 @@
 
 
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.List;
 
@@ -13,8 +14,6 @@ public class Main {
         userInterFace.printWelcomingMessage();
         new FightManager();
         for (int i = 0; i < 1000; i++) {
-
-
                 userInterFace.playerMovementInterface();
         }
 
@@ -794,7 +793,6 @@ class CoinManager{
         }
     }
 class FightManager{
-    //todo add public version of fight manager.
   protected static FightManager publicFightManager = new FightManager();
    private final UserInterface userInterFace = UserInterface.getUserInterface();
    protected final LootManager lootManager = LootManager.getLootManager();
@@ -834,6 +832,7 @@ class FightManager{
         }
         else {
             System.out.println(userInterFace.red+"You are dead"+userInterFace.resetColor);
+            throw new RuntimeException("You Died");
         }
     }
     public void enemyTurn(Player player, Entity entity){
@@ -1822,7 +1821,6 @@ class Entity {
     //endregion
     //region calculate and checker functions
     public int CalculateDamageOut(){
-        //TODO find final way for consistently variable damage output.
         int criticalHitTarget = 100 - entityCriticalHitChance;
         boolean criticalHit = (rand.nextInt(100) >= criticalHitTarget);
         return criticalHit ? (int) (entityBaseDamage * entityCriticalMultiplier) : entityBaseDamage;
@@ -2037,7 +2035,6 @@ class Player{
         // do not use this function to deal damage to the player unless if that damage ignores dodge chance and defence as those are calculated separately
         this.currentHealth -= damageTaken;
         if(isPlayerDead()){
-            //TODO call game over function or otherwise deal with player death.
         }
     }
     public void healPlayer(int healthGain){
@@ -2089,7 +2086,6 @@ class Player{
     }
     public void consumeHealthPotion(HealthPotion potion){
         getInventoryManager().potions.remove(potion);
-        //TODO find final determinate values for health potion healing current values are just placeholders.
             healPlayer(
         switch (potion.getHealingLevel()){
             case MINI -> 2;
