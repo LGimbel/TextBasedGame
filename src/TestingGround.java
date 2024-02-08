@@ -4,40 +4,20 @@ public class TestingGround {
 
 
     public static void main(String[] args) {
-        Random random = new Random();
-
-        try {
-
-            System.in.read();
-        }
-        catch (Exception e){
-
-
-        }
-        Location location = new Location(7,10);
-        Location location1 = new Location(7,10);
-        System.out.println(location1);
-        System.out.println(location);
-
 
 
         int iterations = 1000;
         int maxInput = 40;
         double scaleIncrement = 0.5;
+        int testPer = 1000;
+
 //        System.out.println("**********************************************************************************************************************************************************************************************************************************************************");
 
-//        for (double input = 0; input <= maxInput; input += scaleIncrement) {
-//            double[] results = testFunction(input, iterations);
-//            double average = calculateAverage(results);
-//            double min = findMin(results);
-//            double max = findMax(results);
-//
-//            System.out.println("Input: " + input +
-//                    ", Average: " + average +
-//                    ", Min: " + min +
-//                    ", Max: " + max);
-//        }
-//    }
+        for (double input = 0; input <= maxInput; input += scaleIncrement) {
+          for(int i = 0; i <= testPer; i++){
+
+        }
+    }
 //
 //    private static double[] testFunction(double input, int iterations) {
 //        double[] results = new double[iterations];

@@ -1,20 +1,20 @@
-import org.w3c.dom.ls.LSOutput;
+
 
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
 
-/**
- *
- */
+
 public class Main {
     public static void main(String[] args) {
 
         UserInterface userInterFace = UserInterface.getUserInterface();
         userInterFace.printWelcomingMessage();
         new FightManager();
-        while (true){
+        for (int i = 0; i < 1000; i++) {
+
+
                 userInterFace.playerMovementInterface();
         }
 
@@ -25,7 +25,6 @@ public class Main {
     }
 }
 //region enumerations
-
 enum Rooms{
 SHOP,ENEMY,TREASURE,SUPERTREASURE,CLEARED
 }
@@ -45,6 +44,7 @@ enum PotionLevel {
 enum CoinLevels{
     COPPER,SILVER,GOLD,PLATINUM
 }
+
 //endregion
 class UserInterface {
     private static final UserInterface PublicUserInterFace = new UserInterface();
@@ -97,6 +97,7 @@ class UserInterface {
                 System.out.println(chosenDirection.concat(" was not an option please try again."));
                 System.out.println("If you would like help with movement commands type. \"help\".");
                 playerMovementInterface();
+
             }
         }
     }
@@ -107,24 +108,25 @@ class UserInterface {
         } catch (IOException ignored) {
         }
     }
-    public void choseInventoryAction(Player player){
-        final String menu = "1:Weapons\n2:Armour\n3:Health Potions\n4:Back";
+    public void choseInventoryAction(Player player) {
+        final String menu = "1:Weapons\n2:Armour\n3:Health Potions\n4:View coin Balance\n5:Back";
         System.out.println(magenta + "*".repeat(45) + resetColor);
         System.out.println(menu);
         int chosenAction = scanner.nextInt();
-        switch (chosenAction){
+        switch (chosenAction) {
             case 1 -> weaponInventoryAction(player);
             case 2 -> armourInventoryAction(player);
             case 3 -> healthPotionInventoryAction(player);
-            case 4 -> {
-            }
+            case 4 -> player.coinManager.printBalance();
+            case 5 ->{}
             default -> {
-                System.out.println(chosenAction + " was not an option please try again.");
-                choseInventoryAction(player);
+                    System.out.println(chosenAction + " was not an option please try again.");
+                    choseInventoryAction(player);
                 }
+            }
+            pressEnterToContinue();
         }
-        pressEnterToContinue();
-    }
+
     private void healthPotionInventoryAction(Player player){
         final String menu = "1:Consume Health Potion\n2:Sort and view potions by healing level";
         System.out.println(magenta + "*".repeat(45) + resetColor);
@@ -448,8 +450,8 @@ class UserInterface {
 
 
         switch (userChoice){
-            case "1"-> lootManager.GenerateWeapon(playerTester, entityManager.generateNewEntity(playerTester)).printWeaponStats();
-            case "2"-> lootManager.GenerateArmour(playerTester, entityManager.generateNewEntity(playerTester)).PrintArmourStats();
+            case "1"-> lootManager.generateWeapon(playerTester, entityManager.generateNewEntity(playerTester)).printWeaponStats();
+            case "2"-> lootManager.generateArmour(playerTester, entityManager.generateNewEntity(playerTester)).PrintArmourStats();
             case "3"->{
                 System.out.println("Please enter a value for player level(can include decimals).if you do a non number it will yell at you but it wont break.");
                 try {
@@ -618,9 +620,12 @@ class CoinManager{
         this.silverCoins = silverCoins;
         this.copperCoins = copperCoins;
     }
-    public ItemCost returnAsItemCost(){
-        convertToHighestValue();
-        return new ItemCost(this.platinumCoins,this.goldCoins,this.silverCoins,this.copperCoins);
+
+    public void zero(){
+        copperCoins = 0;
+        silverCoins = 0;
+        goldCoins = 0;
+        platinumCoins = 0;
     }
 
     public void convertToHighestValue(){
@@ -815,7 +820,7 @@ class FightManager{
             }
         }while ((!entity.isDead() && !entity.isAbandoned() && !player.isPlayerDead()));
         if (entity.isDead()){
-            lootManager.RollAllLootDrops(player,entity);
+            lootManager.rollAllLootDrops(player,entity);
             player.addExp(entity.getEntityExperience());
             player.incrementEntitiesDefeated();
 
@@ -895,35 +900,42 @@ class LootManager{
     LootManager(){
         //constructor
     }
-
     public static LootManager getLootManager() {
         return PubliclootManager;
         }
-    public void RollAllLootDrops(Player player,Entity entity){
-        RollForHealthPotionDrop(player,entity);
-        RollForItemDrop(player,entity);
-        //TODO add one for gold but that also requires adding the gold infrastructure which can come later.
+    public void rollAllLootDrops(Player player, Entity entity){
+        rollForHealthPotionDrop(player,entity);
+        rollForItemDrop(player,entity);
+        rollForCoins(player,entity);
     }
-    public void RollForHealthPotionDrop(Player player,Entity entity){
+    public void rollForHealthPotionDrop(Player player, Entity entity){
         boolean wasBoss = entity.isBoss();
         if(wasBoss) {
-            player.addToInventory(GenerateHealthPotion(entity));
+            player.addToInventory(generateHealthPotion(entity));
         }
         else {
             if(random.nextBoolean()){
-                player.addToInventory(GenerateHealthPotion(entity));
+                player.addToInventory(generateHealthPotion(entity));
             }
         }
 
 
 
     }
-    public void RollForItemDrop(Player player,Entity entity){
+    public void rollForCoins(Player player, Entity entity){
+        int entityHealth = entity.getEntityMaxHealth();
+        double playerLevel =player.getPlayerLevel();
+        double randomModifier = random.nextDouble(0.6,5.2);
+        boolean wasBoss = entity.isBoss();
+        int copperCoinsDropped = wasBoss ? (int) (playerLevel * entityHealth * randomModifier) * 3 : (int) (playerLevel * entityHealth * randomModifier) ;
+        player.coinManager.addCoins(CoinLevels.COPPER, copperCoinsDropped);
+    }
+    public void rollForItemDrop(Player player, Entity entity){
         boolean wasBoss = entity.isBoss();
         if(wasBoss){
             //guarantee that bosses will drop loot
-            player.addToInventory((GenerateArmour(player,entity)));
-            player.addToInventory(GenerateWeapon(player,entity));
+            player.addToInventory((generateArmour(player,entity)));
+            player.addToInventory(generateWeapon(player,entity));
         }
         else {
             boolean itemType = random.nextBoolean();
@@ -931,14 +943,14 @@ class LootManager{
             boolean rollTwo = random.nextBoolean();
             if (rollOne || rollTwo){
                 if (itemType) {
-                    player.addToInventory(GenerateArmour(player,entity));
+                    player.addToInventory(generateArmour(player,entity));
                 } else {
-                    player.addToInventory(GenerateWeapon(player,entity));
+                    player.addToInventory(generateWeapon(player,entity));
                 }
             }
         }
     }
-    public Weapon GenerateWeapon(Player player,Entity entity){
+    public Weapon generateWeapon(Player player, Entity entity){
         //region player stats retrieved
        final double playerLevel = player.getPlayerLevel();
         //endregion
@@ -947,51 +959,51 @@ class LootManager{
         //endregion
         //region weapon stats to be dynamically generated
         //further documentation for the stats generated here can be found in the lootTable.txt file
-        ItemRarity rarity = GenerateItemRarity(wasBoss);
-        String weaponName = GenerateWeaponName(rarity);
-        int baseDamage = GenerateWeaponBaseDamage(rarity,playerLevel);
-        int criticalHitChance = GenerateWeaponCriticalChance(rarity);
-        double criticalHitDamageMultiplier = GenerateWeaponCriticalDamageMultiplier(rarity);
+        ItemRarity rarity = generateItemRarity(wasBoss);
+        String weaponName = generateWeaponName(rarity);
+        int baseDamage = generateWeaponBaseDamage(rarity,playerLevel);
+        int criticalHitChance = generateWeaponCriticalChance(rarity);
+        double criticalHitDamageMultiplier = generateWeaponCriticalDamageMultiplier(rarity);
         return new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
         //endregion
     }
-    public Weapon GenerateWeapon(double level,Entity entity){
+    public Weapon generateWeapon(double level, Entity entity){
         // region entity stats retrieved.
         final boolean wasBoss = entity.isBoss();
         //endregion
         //region weapon stats to be dynamically generated
         //further documentation for the stats generated here can be found in the lootTable.txt file
-        ItemRarity rarity = GenerateItemRarity(wasBoss);
-        String weaponName = GenerateWeaponName(rarity);
-        int baseDamage = GenerateWeaponBaseDamage(rarity,level);
-        int criticalHitChance = GenerateWeaponCriticalChance(rarity);
-        double criticalHitDamageMultiplier = GenerateWeaponCriticalDamageMultiplier(rarity);
+        ItemRarity rarity = generateItemRarity(wasBoss);
+        String weaponName = generateWeaponName(rarity);
+        int baseDamage = generateWeaponBaseDamage(rarity,level);
+        int criticalHitChance = generateWeaponCriticalChance(rarity);
+        double criticalHitDamageMultiplier = generateWeaponCriticalDamageMultiplier(rarity);
         return new Weapon(weaponName,baseDamage,criticalHitChance,criticalHitDamageMultiplier,rarity);
         //endregion
     }
-    public Armour GenerateArmour(Player player,Entity entity){
+    public Armour generateArmour(Player player, Entity entity){
         double playerLevel = player.getPlayerLevel();
         boolean wasBoss = entity.isBoss();
         //region armour stats to be generated
-        ItemRarity rarity = GenerateItemRarity(wasBoss);
-        String itemName = GenerateArmourName(rarity);
-        int defense = GenerateArmourDefense(playerLevel,rarity);
-        int dodgeChance = GenerateArmourDodgeChance(rarity);
+        ItemRarity rarity = generateItemRarity(wasBoss);
+        String itemName = generateArmourName(rarity);
+        int defense = generateArmourDefense(playerLevel,rarity);
+        int dodgeChance = generateArmourDodgeChance(rarity);
         //endregion
         return new Armour(itemName,defense,dodgeChance,rarity);
 
     }
-    public Armour GenerateArmour(double level,Entity entity){
+    public Armour generateArmour(double level, Entity entity){
         boolean wasBoss = entity.isBoss();
         //region armour stats to be generated
-        ItemRarity rarity = GenerateItemRarity(wasBoss);
-        String itemName = GenerateArmourName(rarity);
-        int defense = GenerateArmourDefense(level,rarity);
-        int dodgeChance = GenerateArmourDodgeChance(rarity);
+        ItemRarity rarity = generateItemRarity(wasBoss);
+        String itemName = generateArmourName(rarity);
+        int defense = generateArmourDefense(level,rarity);
+        int dodgeChance = generateArmourDodgeChance(rarity);
         //endregion
         return new Armour(itemName,defense,dodgeChance,rarity);
     }
-    public HealthPotion GenerateHealthPotion(Entity entity){
+    public HealthPotion generateHealthPotion(Entity entity){
         boolean wasBoss = entity.isBoss();
         PotionLevel potionLevel = PotionLevel.MINI;
         int randomChance = random.nextInt(0,101);
@@ -1023,7 +1035,7 @@ class LootManager{
         },potionLevel,ItemRarity.COMMON);
 
         }
-    public ItemRarity GenerateItemRarity(boolean wasBoss){
+    public ItemRarity generateItemRarity(boolean wasBoss){
         int lootRoll = random.nextInt(1,101); // bound is exclusive hence why bound = 101 and origin is inclusive so origin = 1 to conserve a percent scale
         ItemRarity rarity = ItemRarity.COMMON;
         if (wasBoss){
@@ -1062,7 +1074,7 @@ class LootManager{
         return rarity;
     }
     //region weapon specific generations
-    public String GenerateWeaponName(ItemRarity rarity){
+    public String generateWeaponName(ItemRarity rarity){
         String modifier;
         String weapon;
         String finalName;
@@ -1086,7 +1098,7 @@ class LootManager{
         return coloredName;
 
     }
-    public int GenerateWeaponBaseDamage(ItemRarity rarity,double playerLevel){
+    public int generateWeaponBaseDamage(ItemRarity rarity, double playerLevel){
         int startDamage = 2 + (int)(playerLevel/2);
         boolean modifier = random.nextBoolean();
         int damageAdjust = (int) ((playerLevel*10)/(15));
@@ -1101,7 +1113,7 @@ class LootManager{
         };
         return (int) augmentedDamage;
     }
-    public int GenerateWeaponCriticalChance(ItemRarity rarity){
+    public int generateWeaponCriticalChance(ItemRarity rarity){
         return switch (rarity){
             case TRASH -> 1;
             case COMMON -> 5;
@@ -1111,7 +1123,7 @@ class LootManager{
             case UNIQUE -> 25;
         };
     }
-    public double GenerateWeaponCriticalDamageMultiplier(ItemRarity rarity){
+    public double generateWeaponCriticalDamageMultiplier(ItemRarity rarity){
         return switch (rarity){
             case TRASH -> 1;
             case COMMON -> 1.5;
@@ -1123,7 +1135,7 @@ class LootManager{
     }
     //endregion
     //region armour specific generations
-    public int GenerateArmourDefense(double playerLevel,ItemRarity rarity){
+    public int generateArmourDefense(double playerLevel, ItemRarity rarity){
         int baseDefenseLevel = (int) playerLevel;
         int randomModifier = random.nextInt(0,Math.max(baseDefenseLevel/4,2));
         int preAugmentDefense = baseDefenseLevel + randomModifier;
@@ -1137,7 +1149,7 @@ class LootManager{
         };
         return Math.max(augmentedDefense - baseDefenseLevel,0);
     }
-    public int GenerateArmourDodgeChance(ItemRarity rarity){
+    public int generateArmourDodgeChance(ItemRarity rarity){
         int baseRandom = random.nextInt(0,11);
         int finalDodgeChance = switch (rarity){
             case TRASH -> baseRandom - 5;
@@ -1150,7 +1162,7 @@ class LootManager{
         return Math.max(finalDodgeChance, 0);
 
     }
-    public String GenerateArmourName(ItemRarity rarity){
+    public String generateArmourName(ItemRarity rarity){
         String modifier;
         String armourType;
         String finalName;
@@ -1254,8 +1266,6 @@ class InventoryManager{
     }
     //endregion
 
-
-
 }
 class EntityManager {
     //GOD to the world an instance should be made on game initialization.
@@ -1297,7 +1307,6 @@ class EntityManager {
     public Entity generateNewEntityForShop(double level){
         //used only for generation of items in the shop.
         int entityHealth = GenerateEntityHealth(level);
-        String entityName = "ShopEntity";
         return new Entity(true, false, "ShopEntity", 0.0,entityHealth, 0, 0, 0.0, 0, true);
     }
     //region entity generation algorithms
@@ -1380,11 +1389,13 @@ class WorldManager {
       return publicworldManager;
     }
     Random rand = new Random();
-    /**
+    //("Player Changeable stuff")
+
+    /*
      * players can Change the numbers bellow 2 variables to change the map size note rows and columns may act inverse as expected.
      */
-    private static final int rows = 10; // player can specify if desired will change map size
-    private static final int columns = 10; // player can specify if desired will change map size
+    private static final int rows = 100; // player can specify if desired will change map size
+    private static final int columns = 100; // player can specify if desired will change map size
     //********************************************************************
     protected static WorldManager publicworldManager = new WorldManager(rows,columns);
     protected Player player = Player.getPublicPlayer();
@@ -1499,16 +1510,16 @@ class WorldManager {
             }
     public void resolveSuperTreasureEncounter(){
         System.out.println("you enter a Super Treasure room!");
-        player.addToInventory(LootManager.getLootManager().GenerateWeapon(player.getPlayerLevel() + 3.0,EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel() + 3)));
-        player.addToInventory(LootManager.getLootManager().GenerateArmour((Player.getPublicPlayer().getPlayerLevel() + 3),EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel() + 3)));
+        player.addToInventory(LootManager.getLootManager().generateWeapon(player.getPlayerLevel() + 3.0,EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel() + 3)));
+        player.addToInventory(LootManager.getLootManager().generateArmour((Player.getPublicPlayer().getPlayerLevel() + 3),EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel() + 3)));
         player.addToInventory(new HealthPotion(("\u001B[33m".concat("Omega Potion of Healing").concat("\u001B[0m")),PotionLevel.OMEGA,ItemRarity.COMMON));
         player.coinManager.addCoins(CoinLevels.GOLD, rand.nextInt(10,100));
         map[player.getLocation().getXCoordinate()][player.getLocation().getYCoordinate()] = Rooms.CLEARED;
     }
     public void resolveTreasureRoomEncounter(){
         System.out.println("You enter a treasure room!");
-        player.addToInventory(LootManager.getLootManager().GenerateWeapon(player.getPlayerLevel() ,EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel())));
-        player.addToInventory(LootManager.getLootManager().GenerateArmour((Player.getPublicPlayer().getPlayerLevel()),EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel())));
+        player.addToInventory(LootManager.getLootManager().generateWeapon(player.getPlayerLevel() ,EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel())));
+        player.addToInventory(LootManager.getLootManager().generateArmour((Player.getPublicPlayer().getPlayerLevel()),EntityManager.getPublicEntityManager().generateNewEntityForShop(player.getPlayerLevel())));
         player.coinManager.addCoins(CoinLevels.GOLD,rand.nextInt(1,8));
         map[player.getLocation().getXCoordinate()][player.getLocation().getYCoordinate()] = Rooms.CLEARED;
     }
@@ -1541,7 +1552,6 @@ class WorldManager {
         }
     }
 }
-//endregion
 class Shop{
     Random random = new Random();
     private final LootManager lootManager = LootManager.getLootManager();
@@ -1588,13 +1598,13 @@ class Shop{
     }
 
     private Armour generateArmourForSale(){
-       return lootManager.GenerateArmour(shopLevel, entityManager.generateNewEntityForShop(shopLevel));
+       return lootManager.generateArmour(shopLevel, entityManager.generateNewEntityForShop(shopLevel));
     }
     private Weapon generateWeaponForSale(){
-        return lootManager.GenerateWeapon(shopLevel,entityManager.generateNewEntityForShop(shopLevel));
+        return lootManager.generateWeapon(shopLevel,entityManager.generateNewEntityForShop(shopLevel));
     }
     private HealthPotion generateHealthPotionForSale(){
-        return lootManager.GenerateHealthPotion(entityManager.generateNewEntityForShop(shopLevel));
+        return lootManager.generateHealthPotion(entityManager.generateNewEntityForShop(shopLevel));
     }
     private ItemCost generateItemCost(HealthPotion healthPotion){
         return switch (healthPotion.getHealingLevel()){
@@ -1607,19 +1617,34 @@ class Shop{
         };
     }
     private ItemCost generateItemCost(Armour armour){
-        return new ItemCost(1,1,1,1);
+        double x = playerLevel;
+        int totalCopperCost = 0;
+        ItemRarity rarity = armour.getRarity();
+        int preRarityCopperCost = (int) (-11 * Math.pow(x, 5) + 283 * Math.pow(x, 4) + 778 * Math.pow(x, 3) + 195978 * Math.pow(x, 2) + 1333425 * x);
+        switch (rarity){
+            case TRASH -> totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.1,0.7));
+            case COMMON ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.4,1.3));
+            case UNCOMMON ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.6,1.7));
+            case RARE ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.7,1.7));
+            case LEGENDARY ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.75,1.9));
+            case UNIQUE ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.8,1.7));
+        }
+        return new ItemCost(0,0,0,totalCopperCost);
     }
     private ItemCost generateItemCost(Weapon weapon){
-        double costModifier = switch (weapon.getRarity()){
-            case TRASH -> 0.1;
-            case COMMON -> 1;
-            case UNCOMMON -> 1.1;
-            case RARE -> 1.3;
-            case LEGENDARY -> 1.5;
-            case UNIQUE -> 1.6;
-        };
-        int copperCost = 12 + (int) playerLevel * random.nextInt(10,35);
-        return new ItemCost(1,1,1,1);
+        double x = playerLevel;
+        int totalCopperCost = 0;
+        ItemRarity rarity = weapon.getRarity();
+        int preRarityCopperCost = (int) (-11 * Math.pow(x, 5) + 283 * Math.pow(x, 4) + 778 * Math.pow(x, 3) + 195978 * Math.pow(x, 2) + 1333425 * x);
+        switch (rarity){
+            case TRASH -> totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.1,0.7));
+            case COMMON ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.4,1.3));
+            case UNCOMMON ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.6,1.7));
+            case RARE ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.7,1.7));
+            case LEGENDARY ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.75,1.9));
+            case UNIQUE ->  totalCopperCost = (int) (preRarityCopperCost * random.nextDouble(0.8,1.7));
+        }
+        return new ItemCost(0,0,0,totalCopperCost);
     }
     public void purchaseItem(Armour armour){
         if(player.coinManager.canAfford(armourItemCost)){
@@ -1846,7 +1871,6 @@ class Entity {
 
     //endregion
 }
-//region items
 class Item{
     private final ItemRarity rarity;
     private final String itemName;
@@ -1925,16 +1949,16 @@ class Weapon extends Item {
     }
 
 }
-//endregion
+
+
 class Player{
-    //TODO add view inventory and inventory sort options;
-    /**
+    /*
      *use this to set the player default values
      * ensure that player level is not 0 or negative
-     * must start at 0.5 or more
+     * must start at 1 or more
      */
     public CoinManager coinManager;
-    private static final Player  publicPlayer = new Player(50,50,0,12.5,new Weapon("Fists",1000,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),new CoinManager(0,0,0,0));
+    private static final Player  publicPlayer = new Player(50,50,0,1,new Weapon("Fists",4,0,1,ItemRarity.TRASH),new Armour("Leather Apron",0,0,ItemRarity.TRASH),new CoinManager(0,0,0,0));
 
     //region player attributes
     private int maxHealth;
@@ -2034,7 +2058,6 @@ class Player{
         boolean presentationModifier = firstCharOfItemName =='a'||firstCharOfItemName =='e'||firstCharOfItemName =='i'||firstCharOfItemName == 'o'|| firstCharOfItemName == 'u';
        System.out.println((presentationModifier ? "an " : "a ") + weapon.getItemName() + " was added to your inventory.");
         inventoryManager.add(weapon);
-        //TODO implement new inventory management.
     }
     public void addToInventory(Armour armour){
         char firstCharOfItemName = armour.getItemName().toLowerCase().charAt(5);
@@ -2080,7 +2103,6 @@ class Player{
     }
     public void addExp(double amount){
         playerLevel += amount;
-        //todo add thing that checks level up for healing but that can come later.
 
     }
     // endregion
@@ -2096,7 +2118,6 @@ class Player{
         int baseDamage = weapon.getWeaponBaseDamage();
         int criticalHitChance = weapon.getWeaponCriticalHitChance();
         double criticalHitDamageMultiplier = weapon.getWeaponCriticalDamageMulti();
-      //TODO finalize damage stuff.
         boolean criticalHit = (criticalHitChance - 100) >= random.nextInt(100);
         double finalDamage = criticalHit ? baseDamage * criticalHitDamageMultiplier: baseDamage;
         return (int) finalDamage;
